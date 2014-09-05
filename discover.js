@@ -7,23 +7,10 @@ var async = require('async')
 var util = require('./util')
   , Class = util.Class;
 
-var database = require('./database');
+var database = require('./database')
+  , cachelib = require('./cache');
 
 
-
-//var cache = require('./cache');
-
-var cache = {
-    get: function(key, callback) {
-        callback(null, []);
-    },
-    del: function(key, callback) {
-        callback(null, null);
-    },
-    set: function(key, val, expire, callback) {
-        callback(null, null);
-    }
-};
 var AGAIN = new Error();
 
 var tables = {};
@@ -99,8 +86,27 @@ var createField = function(define) {
     return new FieldType(define);
 };
 
-function Discover(db_cfg) {
+function Discover(db_cfg, cache_cfg) {
     var db = database.get_pool(db_cfg);
+
+    var cache = null;
+    if (cache_cfg) {
+        cache = cachelib.init(cache_cfg.servers, cache_cfg.options);
+    }
+    else {
+        cache = {
+            get: function(key, callback) {
+                callback(null, []);
+            },
+            del: function(key, callback) {
+                callback(null, null);
+            },
+            set: function(key, val, expire, callback) {
+                callback(null, null);
+            }
+        };
+    }
+
 
     /**
      * Table: handle database operations
