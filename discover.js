@@ -87,7 +87,7 @@ var createField = function(define) {
 };
 
 function Discover(db_cfg, cache_cfg) {
-    var db = database.get_pool(db_cfg);
+    var db = database.getPool(db_cfg);
 
     var cache = null;
     if (cache_cfg) {
@@ -1076,9 +1076,14 @@ function Discover(db_cfg, cache_cfg) {
     });
     /*}}}*/
 
+    function getDatabase() {
+        return db;
+    }
+
     return {
         Criteria: Criteria,
-        Model: Model
+        Model: Model,
+        getPool: getDatabase
     };
 }
 

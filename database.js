@@ -4,7 +4,7 @@ var ConnectionPool = require('generic-pool').Pool;
 
 var pools = {};
 
-exports.get_pool = function(cfg) {//{{{
+exports.getPool = function(cfg) {//{{{
     if (!pools[cfg.database]) {
         pools[cfg.database] = new ConnectionPool({
             name: 'mysql-pool' + cfg.database,
