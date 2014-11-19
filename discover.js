@@ -89,6 +89,11 @@ var createField = function(define) {
 function Discover(db_cfg, cache_cfg) {
     var db = database.getPool(db_cfg);
 
+    // exports database connection
+    exports.getDb = function() {
+        return db;
+    };
+
     var cache = null;
     if (cache_cfg) {
         cache = cachelib.init(cache_cfg.servers, cache_cfg.options);
