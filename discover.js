@@ -132,7 +132,7 @@ function Discover(db_cfg, cache_cfg) {
                 // 兼容老的数据结构
                 if (!f.column) f.column = f.name;
 
-                // 新的结构下，没有name则默认用colum作为name
+                // 新数据结构下，不定义name的时候采用column作为默认的别名
                 if (!f.name && f.column) f.name = f.column;
 
                 this.fields[f.name] = f;
@@ -741,20 +741,9 @@ function Discover(db_cfg, cache_cfg) {
             var fields = this._select._model.$table.fields;
 
             if (this._filter) {
-                if (this._filter.filters) {
-                    this._filter.filters = this._filter.filters.map(function(filter) {
-                        filter.column = fields[filter.column].column;
-                        return filter;
-                    });
-                }
-                else {
-                    this._filter.column = fields[this._filter.column].column;
-                }
-
                 sql += ' WHERE ' + this._filter.toSQL();
             }
             if (this._orderBy) {
-                this._orderBy.column = fields[this._orderBy.column].column;
                 sql += ' ' + this._orderBy.toSQL();
             }
             if (this._limit) sql += ' ' + this._limit.toSQL();
@@ -874,8 +863,8 @@ function Discover(db_cfg, cache_cfg) {
         },
 
         convertRows: function(rows, opts, callback) {
-            if (!rows || rows.length == 0) return callback(null, 0);
-            callback(null, Number(rows[0]['count']));
+            if (!rows || rows.length === 0) return callback(null, 0);
+            callback(null, Number(rows[0].count));
         }
     });
 
@@ -892,8 +881,8 @@ function Discover(db_cfg, cache_cfg) {
         },
 
         convertRows: function(rows, opts, callback) {
-            if (!rows || rows.length == 0) return callback(null, 0);
-            callback(null, rows[0]['max']);
+            if (!rows || rows.length === 0) return callback(null, 0);
+            callback(null, rows[0].max);
         }
     });
 
@@ -1101,4 +1090,5 @@ function Discover(db_cfg, cache_cfg) {
 module.exports = Discover;
 
 /* vim: set fdm=marker */
+
 
