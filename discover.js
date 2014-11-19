@@ -124,6 +124,12 @@ function Discover(db_cfg, cache_cfg) {
             this.defaults = {};
 
             util.each(fields, function(f){
+                // 兼容老的数据结构
+                if (!f.column) f.column = f.name;
+
+                // 新的结构下，没有name则默认用colum作为name
+                if (!f.name && f.column) f.name = f.column;
+
                 this.fields[f.name] = f;
                 this.columns.push(f.column);
                 if (f.pk) this.pks.push(f);
