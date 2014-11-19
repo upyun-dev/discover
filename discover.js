@@ -90,7 +90,7 @@ function Discover(db_cfg, cache_cfg) {
     var db = database.getPool(db_cfg);
 
     // exports database connection
-    exports.getDb = function() {
+    exports.getDatabase = function() {
         return db;
     };
 
