@@ -741,11 +741,11 @@ function Discover(db_cfg, cache_cfg) {
             var fields = this._select._model.$table.fields;
 
             var convertFilters = function(filters) {
-                if (Array.isArray(filters)) {
-                    return convertFilters(filters);
-                }
-
                 return filters.map(function(filter) {
+                    if (Array.isArray(filter)) {
+                        return convertFilters(filter);
+                    }
+
                     filter.column = fields[filter.column].column;
                     return filter;
                 });
