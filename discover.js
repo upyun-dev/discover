@@ -740,10 +740,28 @@ function Discover(db_cfg, cache_cfg) {
             var sql = this._select.toSQL();
             var fields = this._select._model.$table.fields;
 
+            var convertFilters = function(filters) {
+                if (Array.isArray(filters)) {
+                    return convertFilters(filters);
+                }
+
+                return filters.map(function(filter) {
+                    filter.column = fields[filter.column].column;
+                    return filter;
+                });
+            };
+
             if (this._filter) {
+                if (this._filter.filters) {
+                    this._filter.filters = convertFilters(this._filter.filters);
+                }
+                else {
+                    this._filter.column = fields[this._filter.column].column;
+                }
                 sql += ' WHERE ' + this._filter.toSQL();
             }
             if (this._orderBy) {
+                this._orderBy.column = fields[this._orderBy.column].column;
                 sql += ' ' + this._orderBy.toSQL();
             }
             if (this._limit) sql += ' ' + this._limit.toSQL();
