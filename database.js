@@ -28,6 +28,11 @@ exports.getPool = function(cfg) {//{{{
 
     return {
         query: function(sql, values, callback) {
+            if ('function' === typeof values) {
+                callback = values;
+                values = [];
+            }
+
             pools[cfg.database].acquire(function(err, db){
                 if (err) return callback(err);
 
@@ -44,5 +49,5 @@ exports.getPool = function(cfg) {//{{{
                 callback(null, info.insertId);
             });
         }
-    }
+    };
 };//}}}
