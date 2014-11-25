@@ -447,11 +447,17 @@ function Discover(db_cfg, cache_cfg) {
         _cacheKey: function(val) {
             var id = '';
             if (isEntity(val)) {
-                id = this.$table.pks.map(function(f){return String(val.get(f.name));}).join('-');
+                id = this.$table.pks.map(function(f){
+                    return String(val.get(f.name));
+                }).join('-');
             } else if (Array.isArray(val)) {
-                id = val.map(function(v){return String(v);}).join('-');
+                id = val.map(function(v){
+                    return String(v);
+                }).join('-');
             } else if (util.isObject(val)) {
-                id = this.$table.pks.map(function(f){return String(val[f.name]);}).join('-');
+                id = this.$table.pks.map(function(f){
+                    return String(val[f.column]);
+                }).join('-');
             } else {
                 id = val;
             }
@@ -836,7 +842,7 @@ function Discover(db_cfg, cache_cfg) {
 
         convertRows: function(rows, opts, callback) {
             var model = this._model;
-            if (!rows || rows.length == 0) return callback(null, []);
+            if (!rows || rows.length === 0) return callback(null, []);
             model.findByIds(rows, function(err, objects){
                 if (err) return callback(err);
 
@@ -847,7 +853,7 @@ function Discover(db_cfg, cache_cfg) {
                     }
                 }
                 if (missed.length) {
-                    var keys = missed.map(function(id){return model._cacheKey(id)}, model);
+                    var keys = missed.map(function(id){return model._cacheKey(id);}, model);
                     // delete cache again try again
                     async.forEach(keys, function(key, done){
                         cache.del(key, function(){ done(); });
