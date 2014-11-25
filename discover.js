@@ -746,7 +746,12 @@ function Discover(db_cfg, cache_cfg) {
                         return convertFilters(filter);
                     }
 
-                    filter.column = fields[filter.column].column;
+                    if (filter.filters) {
+                        filter.filters = convertFilters(filter.filters);
+                    }
+                    else {
+                        filter.column = fields[filter.column].column;
+                    }
                     return filter;
                 });
             };
