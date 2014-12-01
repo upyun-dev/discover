@@ -44,7 +44,7 @@ exports.getPool = function(cfg) {//{{{
         },
 
         next_sequence: function(name, callback) {
-            module.exports.query('INSERT INTO `sequence` (`name`) VALUES(?) ON DUPLICATE KEY UPDATE `id` = LAST_INSERT_ID(`id` + 1)', [name], function(err, info){
+            this.query('INSERT INTO `sequence` (`name`) VALUES(?) ON DUPLICATE KEY UPDATE `id` = LAST_INSERT_ID(`id` + 1)', [name], function(err, info){
                 if (err) return callback(err);
                 callback(null, info.insertId);
             });
