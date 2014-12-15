@@ -456,7 +456,7 @@ function Discover(db_cfg, cache_cfg) {
                 }).join('-');
             } else if (util.isObject(val)) {
                 id = this.$table.pks.map(function(f){
-                    return String(val[f.column]);
+                    return String(val[f.name]);
                 }).join('-');
             } else {
                 id = val;
