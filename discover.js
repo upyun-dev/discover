@@ -154,7 +154,7 @@ function Discover(db_cfg, cache_cfg) {
             if (Array.isArray(id) && this.pks.length === id.length) {
                 args = util.clone(id);
             } else if (util.isObject(id)) {
-                args = this.pks.map(function(f){ return id[f.column]; })
+                args = this.pks.map(function(f){ return id[f.column] || id[f.name]; })
                                .filter(function(v){ return !util.isUndefined(v); });
             } else if (this.pks.length === 1) {
                 args = [id];
@@ -448,7 +448,7 @@ function Discover(db_cfg, cache_cfg) {
             var id = '';
             if (isEntity(val)) {
                 id = this.$table.pks.map(function(f){
-                    return String(val.get(f.name));
+                    return String(val.get(f.name || f.column));
                 }).join('-');
             } else if (Array.isArray(val)) {
                 id = val.map(function(v){
@@ -456,7 +456,7 @@ function Discover(db_cfg, cache_cfg) {
                 }).join('-');
             } else if (util.isObject(val)) {
                 id = this.$table.pks.map(function(f){
-                    return String(val[f.name]);
+                    return String(val[f.name] || val[f.column]);
                 }).join('-');
             } else {
                 id = val;
