@@ -448,20 +448,31 @@ function Discover(db_cfg, cache_cfg) {
             var id = '';
             if (isEntity(val)) {
                 id = this.$table.pks.map(function(f){
-                    return String(val.get(f.name || f.column));
+                    if (f.type !== 'binary') {
+                        return String(val.get(f.name || f.column));
+                    }
+
+                    return val.get(f.name || f.column).toString('hex');
                 }).join('-');
             } else if (Array.isArray(val)) {
                 id = val.map(function(v){
+                    if (Buffer.isBuffer(v)) return v.toString('hex');
+
                     return String(v);
                 }).join('-');
             } else if (util.isObject(val)) {
                 id = this.$table.pks.map(function(f){
-                    return String(val[f.name] || val[f.column]);
+                  if (f.type !== 'binary') {
+                      return String(val[f.name || f.column]);
+                  }
+
+                  return String(val[f.name || f.column]).toString('hex');
                 }).join('-');
             } else {
                 id = val;
             }
-            return this.$table.name + ':' + id;
+
+            return crypto.createHash('md5').update(this.$table.name + ':' + id, 'utf8').digest('hex');
         }
     };/*}}}*/
 
