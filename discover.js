@@ -1,14 +1,15 @@
-var EventEmitter = require('events').EventEmitter
-  , crypto = require('crypto');
+var EventEmitter = require('events').EventEmitter;
+var crypto = require('crypto');
 
-var async = require('async')
-  , logger = require('ulogger').createLogger('discover');
+var async = require('async');
+var bignum = require('bignumber.js');
+var logger = require('ulogger').createLogger('discover');
 
-var util = require('./util')
-  , Class = util.Class;
+var util = require('./util');
+var Class = util.Class;
 
-var database = require('./database')
-  , cachelib = require('./cache');
+var database = require('./database');
+var cachelib = require('./cache');
 
 
 var AGAIN = new Error();
@@ -473,6 +474,10 @@ function Discover(db_cfg, cache_cfg) {
             }
 
             return crypto.createHash('md5').update(this.$table.name + ':' + id, 'utf8').digest('hex');
+        },
+
+        cleanCache: function(val, callback) {
+            cache.del(this._cacheKey(val), callback);
         }
     };/*}}}*/
 
@@ -848,7 +853,7 @@ function Discover(db_cfg, cache_cfg) {
         toSQL: function() {
             var table = this._model.$table;
             var cols = table.pks.map(function(f){ return '`' + f.column+ '`'; }).join(', ');
-            return 'SELECT ' + cols + ' FROM `' + this._model.$table.name + '`';
+            return 'SELECT ' + cols + ' FROM `' + table.name + '`';
         },
 
         convertRows: function(rows, opts, callback) {
@@ -1122,13 +1127,12 @@ function Discover(db_cfg, cache_cfg) {
 
     return {
         Criteria: Criteria,
-        Model: Model,
-        getPool: getDatabase
+        getPool: getDatabase,
+        Model: Model
     };
 }
 
 module.exports = Discover;
 
 /* vim: set fdm=marker */
-
 
