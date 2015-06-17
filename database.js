@@ -1,29 +1,21 @@
-var mysql = require('mysql');
+var crypto = require('crypto');
 
-var ConnectionPool = require('generic-pool').Pool;
+var mysql = require('mysql');
 
 var pools = {};
 
 exports.getPool = function(cfg) {//{{{
-    if (!pools[cfg.database]) {
-        pools[cfg.database] = new ConnectionPool({
-            name: 'mysql-pool' + cfg.database,
-            max: cfg.poolSize,
-            idleTimeoutMillis: 60000,
-            create: function(callback){
-                var c = mysql.createConnection({
-                    host: cfg.host || 'localhost',
-                    user: cfg.user,
-                    password: cfg.password,
-                    database: cfg.database
-                });
-                c.connect();
-                callback(null, c);
-            },
-            destroy: function(c){
-                c.end();
-            }
-        });
+    var key = crypto.createHash('md5').update(cfg.host + cfg.database).digest('hex');
+    if (!pools[key]) {
+      var pool  = mysql.createPool({
+        connectionLimit : cfg.poolSize,
+        host: cfg.host || 'localhost',
+        user: cfg.user,
+        password: cfg.password,
+        database: cfg.database
+      });
+
+      pools[key] = pool;
     }
 
     return {
@@ -33,13 +25,8 @@ exports.getPool = function(cfg) {//{{{
                 values = [];
             }
 
-            pools[cfg.database].acquire(function(err, db){
-                if (err) return callback(err);
-
-                db.query(sql, values, function(){
-                    pools[cfg.database].release(db);
-                    callback.apply(this, Array.prototype.slice.call(arguments));
-                });
+            pools[key].query(sql, values, function(){
+                callback.apply(this, Array.prototype.slice.call(arguments));
             });
         },
 

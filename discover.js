@@ -4,6 +4,7 @@ var crypto = require('crypto');
 var async = require('async');
 var bignum = require('bignumber.js');
 var logger = require('ulogger').createLogger('discover');
+var moment = require('moment');
 
 var util = require('./util');
 var Class = util.Class;
@@ -69,18 +70,31 @@ var IntField = fieldTypes['int'] = new Class({
     }
 });
 
-/*
-var DateTimeField = fieldTypes['datetime'] = new Class({
+var DateField = fieldTypes['date'] = new Class({
     Extends: Field,
+
+    fromDB: function(val) {
+        if (val === undefined || val === null) {
+            return val;
+        }
+        return moment(val).toDate();
+    },
 
     toDB: function(val) {
         if (val === undefined || val === null) {
             return val;
         }
-        return util.dateFormat(val, 'isoDateTime');
+        return moment(val).format('YYYY-MM-DD HH:mm:ss');
+    },
+
+    defaultValue: function() {
+        return new Date();
     }
 });
-*/
+
+var DateTimeField = fieldTypes['datetime'] = DateField;
+var TimeStampField = fieldTypes['timestamp'] = DateField;
+
 
 var createField = function(define) {
     var FieldType = fieldTypes[define.type] || Field;
@@ -323,6 +337,7 @@ function Discover(db_cfg, cache_cfg) {
                 var objs = keys.map(function(key){
                     var obj = self._newInstance(rows[key]);
                     if (obj && opts && opts.json) obj = obj.toJSON(opts.secure);
+                    console.log(obj);
                     return obj;
                 });
                 callback(null, objs);
@@ -931,27 +946,6 @@ function Discover(db_cfg, cache_cfg) {
         }
     });
 
-    Criteria.Select.Sum = new Class({
-        Extends: Criteria.Select,
-
-        initialize: function(model, columns) {
-            this._model = model;
-            this._columns = columns;
-        },
-
-        toSQL: function() {
-            var sql_sum = this._columns.map(function(column) {
-                    return 'SUM(`' + column + '`) AS `' + column + '`';
-                }).join(', ');
-            return 'SELECT ' + sql_sum + ' FROM `' + this._model.$table.name + '`';
-        },
-
-        convertRows: function(rows, opts, callback) {
-            if (!rows || rows.length === 0) return callback(null, null);
-
-            callback(null, rows[0]);
-        }
-    });
 
     Criteria.Filter = new Class({
         initialize: function(column, operator, value) {
@@ -1100,10 +1094,6 @@ function Discover(db_cfg, cache_cfg) {
             return new Criteria(new Criteria.Select.Max(model, column));
         },
 
-        sum: function(model, columns) {
-          return new Criteria(new Criteria.Select.Sum(model, columns));
-        },
-
         and: function() {
             return new Criteria.Filter.AND(util.toArray(arguments));
         },
@@ -1160,4 +1150,3 @@ function Discover(db_cfg, cache_cfg) {
 module.exports = Discover;
 
 /* vim: set fdm=marker */
-
