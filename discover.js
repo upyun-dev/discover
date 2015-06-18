@@ -337,7 +337,6 @@ function Discover(db_cfg, cache_cfg) {
                 var objs = keys.map(function(key){
                     var obj = self._newInstance(rows[key]);
                     if (obj && opts && opts.json) obj = obj.toJSON(opts.secure);
-                    console.log(obj);
                     return obj;
                 });
                 callback(null, objs);
