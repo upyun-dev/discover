@@ -945,6 +945,28 @@ function Discover(db_cfg, cache_cfg) {
         }
     });
 
+    Criteria.Select.Sum = new Class({
+        Extends: Criteria.Select,
+
+        initialize: function(model, columns) {
+            this._model = model;
+            this._columns = columns;
+        },
+
+        toSQL: function() {
+            var sql_sum = this._columns.map(function(column) {
+                    return 'SUM(`' + column + '`) AS `' + column + '`';
+                }).join(', ');
+            return 'SELECT ' + sql_sum + ' FROM `' + this._model.$table.name + '`';
+        },
+
+        convertRows: function(rows, opts, callback) {
+            if (!rows || rows.length === 0) return callback(null, null);
+
+            callback(null, rows[0]);
+        }
+    });
+
 
     Criteria.Filter = new Class({
         initialize: function(column, operator, value) {
@@ -1091,6 +1113,10 @@ function Discover(db_cfg, cache_cfg) {
 
         max: function(model, column) {
             return new Criteria(new Criteria.Select.Max(model, column));
+        },
+
+        sum: function(model, columns) {
+           return new Criteria(new Criteria.Select.Sum(model, columns));
         },
 
         and: function() {
