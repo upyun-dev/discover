@@ -1,6 +1,6 @@
 {
   "name": "discover",
-  "version": "0.1.1+15w25b",
+  "version": "0.1.2+15w25c",
   "description": "ORM",
   "main": "index.js",
   "repository": {
