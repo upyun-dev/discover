@@ -478,7 +478,7 @@ function Discover(db_cfg, cache_cfg) {
             } else if (util.isObject(val)) {
                 id = this.$table.pks.map(function(f){
                   if (f.type !== 'binary') {
-                      return String(val[f.name || f.column]);
+                      return String(val[f.name] || val[f.column]);
                   }
 
                   return String(val[f.name || f.column]).toString('hex');
