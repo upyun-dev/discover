@@ -12,6 +12,7 @@
     "bignumber.js": "2.0.0",
     "generic-pool": "^2.2.0",
     "memcached": "2.0.0",
+    "moment": "^2.10.3",
     "mysql": "2.7.0",
     "ulogger": "git+ssh://gitlab@gitlab.widget-inc.com:65422/foundation/ulogger.git#master",
     "underscore": "1.6.0"
