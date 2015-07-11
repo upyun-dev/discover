@@ -954,8 +954,9 @@ function Discover(db_cfg, cache_cfg) {
         },
 
         toSQL: function() {
+            var fields = this._model.$table.fields;
             var sql_sum = this._columns.map(function(column) {
-                    return 'SUM(`' + column + '`) AS `' + column + '`';
+                    return 'SUM(`' + fields[column].column + '`) AS `' + column + '`';
                 }).join(', ');
             return 'SELECT ' + sql_sum + ' FROM `' + this._model.$table.name + '`';
         },
