@@ -549,14 +549,12 @@ function Discover(db_cfg, cache_cfg) {
 
         util.each(fields, function(f){
             var fieldName = f.name;
-            if (fieldName != 'domain') {
-                proto.__defineGetter__(fieldName, function(){
-                    return this.get(fieldName);
-                });
-                proto.__defineSetter__(fieldName, function(value){
-                    return this.set(fieldName, value);
-                });
-            }
+            proto.__defineGetter__(fieldName, function(){
+                return this.get(fieldName);
+            });
+            proto.__defineSetter__(fieldName, function(value){
+                return this.set(fieldName, value);
+            });
         });
 
         return newModel;
