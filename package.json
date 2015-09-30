@@ -7,6 +7,9 @@
     "type": "git",
     "url": "ssh://gitlab@gitlab.widget-inc.com:65422/foundation/discover.git"
   },
+  "scripts": {
+    "lint": "gulp"
+  },
   "dependencies": {
     "async": "^1.4.2",
     "bignumber.js": "^2.0.7",
@@ -18,5 +21,10 @@
     "underscore": "^1.8.3"
   },
   "author": "Zola, PenaFong",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-jscs": "^3.0.0",
+    "gulp-jshint": "^1.11.2"
+  }
 }
