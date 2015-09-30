@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "ssh://gitlab@gitlab.widget-inc.com:65422/foundation/discover.git"
+    "url": "ssh://gitlab@gitlab.widget-inc.com:65422/upyun-dns/discover.git"
   },
   "scripts": {
     "lint": "gulp"
