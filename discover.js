@@ -966,7 +966,6 @@ function Discover(dbCfg, cacheCfg) {
     }
   });
 
-
   Criteria.Filter = new Class({
     initialize: function(column, operator, value) {
       this.column = column;
@@ -1124,6 +1123,10 @@ function Discover(dbCfg, cacheCfg) {
 
     or: function() {
       return new Criteria.Filter.OR(util.toArray(arguments));
+    },
+
+    like: function(column, value) {
+      return new Criteria.Filter(column, 'like', value);
     },
 
     eq: function(column, value) {
