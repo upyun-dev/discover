@@ -1,1 +1,1 @@
-module.exports = require('./discover');
+module.exports = require('./lib/discover');
