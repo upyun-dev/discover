@@ -10,9 +10,29 @@ var cacheCfg = {
 describe("Test lib/cache.js", function () {
 
   context("* initialize cache without option", function () {
+    var cache = Cache.init();
+
     it("should still availiable and fallback into inner-process memory storage", function () {
-      var cache = Cache.init();
       cache.should.be.ok();
+    });
+
+    it("get should be availiable", function (done) {
+      cache.get("key", function (err, value) {
+        value.should.be.empty();
+        done();
+      });
+    });
+    it("set should be availiable", function (done) {
+      cache.set("key", "value", 5000, function (err) {
+        should.not.exist(err);
+        done();
+      });
+    });
+    it("del should be availiable", function (done) {
+      cache.del("key", function (err) {
+        should.not.exist(err);
+        done();
+      });
     });
   });
 
