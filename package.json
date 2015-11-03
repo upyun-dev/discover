@@ -1,6 +1,6 @@
 {
   "name": "discover",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "ORM",
   "main": "index.js",
   "repository": {
@@ -21,7 +21,7 @@
     "ulogger": "git+ssh://gitlab@gitlab.widget-inc.com:65422/foundation/ulogger.git#master",
     "underscore": "^1.8.3"
   },
-  "author": "Zola, PenaFong",
+  "author": ["Zola", "PenaFong", "ran <abbshrsoufii@gmail.com>"],
   "license": "ISC",
   "devDependencies": {
     "gulp": "^3.9.0",
