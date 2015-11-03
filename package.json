@@ -25,6 +25,8 @@
   "author": ["Zola", "PenaFong", "ran <abbshrsoufii@gmail.com>"],
   "license": "ISC",
   "devDependencies": {
+    "mocha": "*",
+    "should": "*",
     "gulp": "^3.9.0",
     "gulp-jscs": "^3.0.0",
     "gulp-jshint": "^1.11.2"
