@@ -26,16 +26,17 @@ describe("Test lib/database.js", function () {
 
   context("invoke getPool with the right-configured argument", function () {
     var pool = database.getPool(databaseCfg);
-    var SQL = "";
+    var sql = "select * from users";
+    var name = "sequence";
     var value = [];
 
-    it("should return the pool object include the field 'query' and 'next_sequence'", function ()
+    it("should return the pool object include the field 'query' and 'next_sequence'", function () {
       pool.should.have.properties(['query', 'next_sequence']);
     });
 
     context("when query without argument 'value'", function () {
       it("query method should be evaluate successfully", function (done) {
-        pool.query(SQL, function (err) {
+        pool.query(sql, function (err, rows, fields) {
           should.not.exist(err);
           done();
         });
@@ -44,16 +45,39 @@ describe("Test lib/database.js", function () {
 
     context("when query with argument 'value'", function () {
       it("query method should be evaluate successfully", function (done) {
-        pool.query(SQL, value, function (err) {
+        pool.query(sql, value, function (err, rows, fields) {
           should.not.exist(err);
-          argument.length.should.be.above(1);
+          arguments.length.should.be.above(1);
           done();
         });
       });
     });
 
-    it("next_sequence method should be success", function () {
+    context("when execute an empty query", function () {
+      it("callback should be invoked with the err", function (done) {
+        pool.query("", value, function (err) {
+          should.exist(err);
+          done();
+        });
+      });
+    });
 
+    // context("when Table 'sequence' not exist", function () {
+    //   it("next_sequence method should not be success", function (done) {
+    //     pool.next_sequence(name, function (err, id) {
+    //       should.exist(err);
+    //       done();
+    //     });
+    //   });
+    // });
+
+    context("when Table 'sequence' exist", function () {
+      it("next_sequence should generate inc-id", function (done) {
+        pool.next_sequence(name, function (err, id) {
+          should.exist(id);
+          done();
+        });
+      });
     });
   });
 });
