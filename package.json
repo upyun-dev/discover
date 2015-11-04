@@ -1,7 +1,6 @@
 {
   "name": "discover",
-  "version": "0.2.0",
-  "private": true,
+  "version": "0.1.6",
   "description": "ORM",
   "main": "index.js",
   "repository": {
@@ -9,8 +8,7 @@
     "url": "ssh://gitlab@gitlab.widget-inc.com:65422/upyun-dns/discover.git"
   },
   "scripts": {
-    "lint": "gulp build/gulpfile.js",
-    "test": "mocha test"
+    "lint": "gulp"
   },
   "dependencies": {
     "async": "^1.4.2",
@@ -22,7 +20,7 @@
     "ulogger": "git+ssh://gitlab@gitlab.widget-inc.com:65422/foundation/ulogger.git#master",
     "underscore": "^1.8.3"
   },
-  "author": ["Zola", "PenaFong", "ran <abbshrsoufii@gmail.com>"],
+  "author": "Zola, PenaFong",
   "license": "ISC",
   "devDependencies": {
     "gulp": "^3.9.0",
