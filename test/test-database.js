@@ -62,20 +62,14 @@ describe("Test lib/database.js", function () {
       });
     });
 
-    // context("when Table 'sequence' not exist", function () {
-    //   it("next_sequence method should not be success", function (done) {
-    //     pool.next_sequence(name, function (err, id) {
-    //       should.exist(err);
-    //       done();
-    //     });
-    //   });
-    // });
-
     context("when Table 'sequence' exist", function () {
       it("next_sequence should generate inc-id", function (done) {
         pool.next_sequence(name, function (err, id) {
           should.exist(id);
-          done();
+          pool.next_sequence(name, function (err, newId) {
+            newId.should.be.equal(id + 1);
+            done();
+          });
         });
       });
     });
