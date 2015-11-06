@@ -36,13 +36,13 @@ describe("Test lib/cache.js", function () {
     });
   });
 
-  context("* initialize cache with an option but it's NULL", function () {
+  context("initialize cache with an option but it's NULL", function () {
     it("should not throw an Error", function () {
       Cache.init({}).should.be.ok();
     });
   });
 
-  context("* initialize cache with an option which include the right fields", function () {
+  context("initialize cache with an option which include the right fields", function () {
     var cache = Cache.init(cacheCfg);
 
     it("should use memcached as cache", function () {
