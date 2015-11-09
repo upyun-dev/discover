@@ -1,4 +1,4 @@
-var Cache = require("../lib/cache");
+var Cache = require("../../lib/cache");
 var Memcached = require('memcached');
 var should = require('should');
 

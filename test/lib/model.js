@@ -1,5 +1,5 @@
 var should = require('should');
-var Model = require('../lib/model');
+var Model = require('../../lib/model');
 
 var databaseCfg = {
   poolSize: 5,

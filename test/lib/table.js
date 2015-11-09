@@ -1,7 +1,7 @@
-var Table = require("../lib/table");
-var model = require('../lib/model');
-var database = require("../lib/database");
-var Field = require('../lib/type');
+var Table = require("../../lib/table");
+var model = require('../../lib/model');
+var database = require("../../lib/database");
+var Field = require('../../lib/type');
 var should = require("should");
 
 var databaseCfg = {
