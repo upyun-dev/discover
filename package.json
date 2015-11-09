@@ -8,7 +8,8 @@
     "url": "ssh://gitlab@gitlab.widget-inc.com:65422/upyun-dns/discover.git"
   },
   "scripts": {
-    "lint": "gulp"
+    "lint": "gulp",
+    "test": "mocha test/"
   },
   "dependencies": {
     "async": "^1.4.2",
@@ -23,10 +24,11 @@
   "author": "Zola, PenaFong",
   "license": "ISC",
   "devDependencies": {
-    "mocha": "*",
-    "should": "*",
     "gulp": "^3.9.0",
     "gulp-jscs": "^3.0.0",
-    "gulp-jshint": "^1.11.2"
+    "gulp-jshint": "^1.11.2",
+    "istanbul": "^0.4.0",
+    "mocha": "*",
+    "should": "*"
   }
 }
