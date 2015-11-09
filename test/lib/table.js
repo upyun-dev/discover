@@ -20,7 +20,20 @@ describe("Test lib/table.js", function () {
   ], db);
 
   var Model = model.init({ db: databaseCfg })({
-    tableName: 'test'
+    tableName: 'test',
+    fields: [{
+      unique: true,
+      name: 'test'
+    }, {
+      unique: true,
+      name: 'test_test'
+    }, {
+      unique: true,
+      name: 'id'
+    }, {
+      name: 'name'
+    }],
+    indices: []
   });
 
   describe('test public method - findById', function () {
@@ -102,9 +115,21 @@ describe("Test lib/table.js", function () {
   describe('test public method - update', function () {
     var model = new Model();
 
-    it('should not be failure', function (done) {
+    it('should not be failure if no attrs need to update', function (done) {
       table.update(model, function (err, ret) {
         ret.should.not.be.true();
+        done();
+      });
+    });
+
+    it('should eval the sql', function (done) {
+      var model = new Model();
+      model.test = 'a';
+      model.test_test = 'b';
+      model.id = '9';
+      model.name = "testname";
+      table.update(model, function (err, ret) {
+        should.not.exist(err);
         done();
       });
     });

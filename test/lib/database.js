@@ -9,6 +9,14 @@ var databaseCfg = {
   database: 'robintest'
 };
 
+var dup_databaseCfg = {
+  poolSize: 0,
+  host: '127.0.0.1',
+  user: 'root',
+  password: '',
+  database: 'testdiscover'
+};
+
 describe("Test lib/database.js", function () {
 
   context("invoke getPool without an argument", function () {
@@ -73,5 +81,25 @@ describe("Test lib/database.js", function () {
         });
       });
     });
+
+    context("when eval a query on a pool which size is not enough", function () {
+      it('should got an error on callback', function (done) {
+        var pool = database.getPool(dup_databaseCfg);
+        pool.query('select', function (err) {
+          should.exist(err);
+          done();
+        });
+      });
+    });
+
+    context("when eval next_sequence with a db that doesn't has a sequence Table", function () {
+      var pool = database.getPool(dup_databaseCfg);
+      it('should got an error on callback', function (done) {
+        pool.next_sequence(name, function (err) {
+          should.exist(err);
+          done();
+        });
+      });
+    })
   });
 });

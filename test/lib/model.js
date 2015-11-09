@@ -21,6 +21,53 @@ describe('Test lib/model.js', function () {
     indices: []
   });
 
+  context('when not defined the type in fields', function () {
+    var model = Model({
+      tableName: 'test',
+      fields: [{
+        unique: true,
+        name: 'test'
+      }, {
+        unique: true,
+        name: 'test_test'
+      }, {
+        unique: true,
+        name: 'id'
+      }],
+      indices: []
+    });
+    it('should be success', function () {
+      model.should.be.ok();
+    });
+
+    context('when invoke a funcName on the NewModel', function () {
+      it('method should exists and throw an error', function () {
+        should.throws(model.findByTest, Error);
+      });
+    });
+
+    context('invoke setter / getter', function () {
+      it('should assign the value to field', function () {
+        var newModel = new model;
+        newModel.id = 'id';
+        newModel.id.should.be.equal('id');
+      });
+    });
+  });
+
+  context('when unique or index not in fields', function () {
+    it('newModel.findByCustomKey should not exist', function () {
+      var model = Model({
+        tableName: 'test',
+        fields: [{
+          name: 'test'
+        }],
+        indices: []
+      })
+      should.not.exist(model.findByTest);
+    });
+  });
+
   context('when invoke Model with new or as a normal function', function () {
     it('should return a newModel Class', function () {
       var model = Model({
