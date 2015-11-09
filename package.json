@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "gulp",
     "test": "node_modules/mocha/bin/_mocha",
-    "test-cov": "istanbul cover ."
+    "test-cov": "NODE_ENV=test istanbul cover node_modules/mocha/bin/_mocha"
   },
   "dependencies": {
     "async": "^1.4.2",
