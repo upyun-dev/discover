@@ -15,4 +15,10 @@ describe("Test lib/discover.js", function () {
   it("should obtains 'Criteria' 'Model' and 'getPool' props", function () {
     orm.should.have.properties(['getPool', 'Model', 'Criteria']);
   });
+
+  describe("test method getPool", function () {
+    it("should return the db instance", function () {
+      orm.getPool().should.have.properties(['query', 'next_sequence']);
+    });
+  });
 });
