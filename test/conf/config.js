@@ -10,7 +10,7 @@ module.exports = {
     password: 'abbshr',
     database: 'robintest'
   },
-  dup_database: {
+  dupDatabase: {
     poolSize: 0,
     host: '127.0.0.1',
     user: 'root',

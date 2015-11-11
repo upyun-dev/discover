@@ -1,9 +1,10 @@
 var discover = require("../lib/discover");
 var should = require("should");
-
-var databaseCfg = require('./conf/config').database;
+var config = require('./conf/config');
 
 describe("lib/discover.js", function () {
+  var databaseCfg = config.database;
+
   var orm = discover(databaseCfg);
 
   it("should obtains 'Criteria' 'Model' and 'getPool' props", function () {

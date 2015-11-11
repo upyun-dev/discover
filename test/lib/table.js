@@ -3,10 +3,11 @@ var model = require('../../lib/model');
 var database = require("../../lib/database");
 var Field = require('../../lib/type');
 var should = require("should");
-
-var databaseCfg = require('../conf/config').database;
+var config = require('../conf/config');
 
 describe("lib/table.js", function () {
+  var databaseCfg = config.database;
+
   var db = database.getPool(databaseCfg);
   var table = new Table("test", [
     new Field.int({ name: "id", pk: true }),

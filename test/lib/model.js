@@ -1,9 +1,10 @@
 var should = require('should');
 var Model = require('../../lib/model');
-
-var databaseCfg = require('../conf/config').database;
+var config = require('../conf/config');
 
 describe('lib/model.js', function () {
+  var databaseCfg = config.database;
+
   Model = Model.init({ db: databaseCfg });
   var model = Model({
     tableName: 'test',

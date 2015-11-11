@@ -2,10 +2,15 @@ var should = require("should");
 var database = require("../../lib/database");
 var config = require('../conf/config');
 
-var databaseCfg = config.database;
-var dup_databaseCfg = config.dup_database;
-
 describe("lib/database.js", function () {
+  var databaseCfg = config.database;
+  var dupDatabaseCfg = config.dupDatabase;
+
+  before(function () {
+    // create sequence table
+    var pool = database.getPool(databaseCfg);
+    pool.query('create table `sequence` (`id` int, `name` text)', [],  function () {});
+  });
 
   context("when invoke getPool without an argument", function () {
     it("should throw an Error", function () {
@@ -72,7 +77,7 @@ describe("lib/database.js", function () {
 
     context("when eval a query on a pool which size is not enough", function () {
       it('should got an error on callback', function (done) {
-        var pool = database.getPool(dup_databaseCfg);
+        var pool = database.getPool(dupDatabaseCfg);
         pool.query('select', function (err) {
           should.exist(err);
           done();
@@ -81,7 +86,7 @@ describe("lib/database.js", function () {
     });
 
     context("when eval next_sequence with a db that doesn't has a sequence Table", function () {
-      var pool = database.getPool(dup_databaseCfg);
+      var pool = database.getPool(dupDatabaseCfg);
       it('should got an error on callback', function (done) {
         pool.next_sequence(name, function (err) {
           should.exist(err);

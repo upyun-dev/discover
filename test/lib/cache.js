@@ -1,10 +1,10 @@
 var Cache = require("../../lib/cache");
 var Memcached = require('memcached');
 var should = require('should');
-
-var cacheCfg = require('../conf/config').cache;
+var config = require('../conf/config');
 
 describe("lib/cache.js", function () {
+  var cacheCfg = config.cache;
 
   context("when initialize cache without option", function () {
     var cache = Cache.init();
