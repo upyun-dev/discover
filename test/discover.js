@@ -1,13 +1,7 @@
 var discover = require("../lib/discover");
 var should = require("should");
 
-var databaseCfg = {
-  poolSize: 5,
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'abbshr',
-  database: 'robintest'
-};
+var databaseCfg = require('./conf/config').database;
 
 describe("Test lib/discover.js", function () {
   var orm = discover(databaseCfg);

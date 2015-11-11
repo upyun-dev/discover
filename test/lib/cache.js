@@ -2,10 +2,7 @@ var Cache = require("../../lib/cache");
 var Memcached = require('memcached');
 var should = require('should');
 
-var cacheCfg = {
-  servers: "127.0.0.1:11211",
-  options: {}
-};
+var cacheCfg = require('../conf/config').cache;
 
 describe("Test lib/cache.js", function () {
 

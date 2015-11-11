@@ -1,21 +1,9 @@
 var should = require("should");
 var database = require("../../lib/database");
+var config = require('../conf/config');
 
-var databaseCfg = {
-  poolSize: 5,
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'abbshr',
-  database: 'robintest'
-};
-
-var dup_databaseCfg = {
-  poolSize: 0,
-  host: '127.0.0.1',
-  user: 'root',
-  password: '',
-  database: 'testdiscover'
-};
+var databaseCfg = config.database;
+var dup_databaseCfg = config.dup_database;
 
 describe("Test lib/database.js", function () {
 

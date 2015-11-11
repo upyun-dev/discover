@@ -1,13 +1,7 @@
 var should = require('should');
 var Model = require('../../lib/model');
 
-var databaseCfg = {
-  poolSize: 5,
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'abbshr',
-  database: 'robintest'
-};
+var databaseCfg = require('../conf/config').database;
 
 describe('Test lib/model.js', function () {
   Model = Model.init({ db: databaseCfg });
