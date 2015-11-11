@@ -4,9 +4,9 @@ var should = require('should');
 
 var cacheCfg = require('../conf/config').cache;
 
-describe("Test lib/cache.js", function () {
+describe("lib/cache.js", function () {
 
-  context("* initialize cache without option", function () {
+  context("when initialize cache without option", function () {
     var cache = Cache.init();
 
     it("should still availiable and fallback into inner-process memory storage", function () {
@@ -33,13 +33,13 @@ describe("Test lib/cache.js", function () {
     });
   });
 
-  context("initialize cache with an option but it's NULL", function () {
+  context("when initialize cache with an option but it's NULL", function () {
     it("should not throw an Error", function () {
       Cache.init({}).should.be.ok();
     });
   });
 
-  context("initialize cache with an option which include the right fields", function () {
+  context("when initialize cache with an option which include the right fields", function () {
     var cache = Cache.init(cacheCfg);
 
     it("should use memcached as cache", function () {

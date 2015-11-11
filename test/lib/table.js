@@ -6,7 +6,7 @@ var should = require("should");
 
 var databaseCfg = require('../conf/config').database;
 
-describe("Test lib/table.js", function () {
+describe("lib/table.js", function () {
   var db = database.getPool(databaseCfg);
   var table = new Table("test", [
     new Field.int({ name: "id", pk: true }),
@@ -30,9 +30,9 @@ describe("Test lib/table.js", function () {
     indices: []
   });
 
-  describe('test public method - findById', function () {
+  describe('findById', function () {
 
-    describe("invoke findById with array ids", function () {
+    context("when invoke findById with array ids", function () {
       context("when pks.length equals to array.length", function () {
         it('should be successful', function (done) {
           table.findById([1], function (err) {
@@ -52,7 +52,7 @@ describe("Test lib/table.js", function () {
       });
     });
 
-    describe("invoke findById with an json object", function () {
+    context("when invoke findById with an json object", function () {
       it("should be successful", function (done) {
         table.findById({ id: 1 }, function (err) {
           should.not.exist(err);
@@ -61,7 +61,7 @@ describe("Test lib/table.js", function () {
       });
     });
 
-    describe("invoke findById with one id", function () {
+    context("when invoke findById with one id", function () {
       context('when id in pks list', function () {
         it('should be successful', function (done) {
           table.findById(1, function (err) {
@@ -82,7 +82,7 @@ describe("Test lib/table.js", function () {
     });
   });
 
-  describe('test public method - insert', function () {
+  describe('insert', function () {
     var model = new Model();
 
     it('should be successful', function (done) {
@@ -95,7 +95,7 @@ describe("Test lib/table.js", function () {
     });
   });
 
-  describe('test public method - delete', function () {
+  describe('delete', function () {
     var model = new Model();
 
     it('should not be failure', function (done) {
@@ -106,7 +106,7 @@ describe("Test lib/table.js", function () {
     });
   });
 
-  describe('test public method - update', function () {
+  describe('update', function () {
     var model = new Model();
 
     it('should not be failure if no attrs need to update', function (done) {

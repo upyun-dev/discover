@@ -2,13 +2,13 @@ var should = require("should");
 var Field = require('../../lib/type');
 var moment = require("moment");
 
-describe("Test lib/type.js", function () {
+describe("lib/type.js", function () {
   var abstract = new Field.raw();
   var json = new Field.json();
   var int = new Field.int();
   var date = new Field.date();
 
-  context("toDB method", function () {
+  context("toDB", function () {
     it("raw abstract type should return original value", function () {
       abstract.toDB("a").should.equal("a");
     });
@@ -35,7 +35,7 @@ describe("Test lib/type.js", function () {
     });
   });
 
-  context('fromDB method', function () {
+  context('fromDB', function () {
     it('raw type should return the original value', function () {
       abstract.fromDB('a').should.equal('a');
     });
@@ -63,7 +63,7 @@ describe("Test lib/type.js", function () {
     });
   });
 
-  context('default value', function () {
+  context('defaultValue', function () {
     it('raw type return null', function () {
       should.not.exist(abstract.defaultValue());
     });

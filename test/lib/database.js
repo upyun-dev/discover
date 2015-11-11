@@ -5,22 +5,22 @@ var config = require('../conf/config');
 var databaseCfg = config.database;
 var dup_databaseCfg = config.dup_database;
 
-describe("Test lib/database.js", function () {
+describe("lib/database.js", function () {
 
-  context("invoke getPool without an argument", function () {
+  context("when invoke getPool without an argument", function () {
     it("should throw an Error", function () {
       should.throws(database.getPool, Error);
     });
   });
 
-  context("invoke getPool with an argument but without the spec-field", function () {
+  context("when invoke getPool with an argument but without the spec-field", function () {
     it("should return the pool object include the field 'query' and 'next_sequence'", function () {
       var pool = database.getPool({});
       pool.should.have.properties(['query', 'next_sequence']);
     });
   });
 
-  context("invoke getPool with the right-configured argument", function () {
+  context("when invoke getPool with the right-configured argument", function () {
     var pool = database.getPool(databaseCfg);
     var sql = "select * from users";
     var name = "sequence";

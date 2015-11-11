@@ -3,7 +3,7 @@ var Model = require('../../lib/model');
 
 var databaseCfg = require('../conf/config').database;
 
-describe('Test lib/model.js', function () {
+describe('lib/model.js', function () {
   Model = Model.init({ db: databaseCfg });
   var model = Model({
     tableName: 'test',
@@ -40,7 +40,7 @@ describe('Test lib/model.js', function () {
       });
     });
 
-    context('invoke setter / getter', function () {
+    context('when invoke setter / getter', function () {
       it('should assign the value to field', function () {
         var newModel = new model;
         newModel.id = 'id';
@@ -80,7 +80,7 @@ describe('Test lib/model.js', function () {
     });
   });
 
-  describe('create a NewModel instance', function () {
+  describe('instance', function () {
     it('should be success', function () {
       var CustomModel = model;
       var newModel = new CustomModel;
