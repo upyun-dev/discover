@@ -7,4 +7,3 @@ coverage
 fabfile.py
 node_modules
 run
-test/conf/config.js
