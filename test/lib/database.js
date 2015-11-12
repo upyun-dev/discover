@@ -6,10 +6,13 @@ describe("lib/database.js", function () {
   var databaseCfg = config.database;
   var dupDatabaseCfg = config.dupDatabase;
 
-  before(function () {
+  before(function (done) {
     // create sequence table
     var pool = database.getPool(databaseCfg);
-    pool.query('create table `sequence` (`id` int, `name` text)', [],  function () {});
+    pool.query('create table `sequence` (`id` int AUTO_INCREMENT, `name` text, PRIMARY KEY (`id`))', [],  function (err) {
+      console.log('======', err);
+      done();
+    });
   });
 
   context("when invoke getPool without an argument", function () {
@@ -27,7 +30,7 @@ describe("lib/database.js", function () {
 
   context("when invoke getPool with the right-configured argument", function () {
     var pool = database.getPool(databaseCfg);
-    var sql = "select * from users";
+    var sql = "select * from sequence";
     var name = "sequence";
     var value = [];
 

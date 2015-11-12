@@ -9,6 +9,12 @@ describe("lib/table.js", function () {
   var databaseCfg = config.database;
 
   var db = database.getPool(databaseCfg);
+
+  before(function () {
+    // create test table
+    db.query('create table `test` (`id` int, `name` text)', [],  function () {});
+  });
+
   var table = new Table("test", [
     new Field.int({ name: "id", pk: true }),
     new Field.int({ name: "name" })
