@@ -10,7 +10,6 @@ describe("lib/database.js", function () {
     // create sequence table
     var pool = database.getPool(databaseCfg);
     pool.query('create table `sequence` (`id` int AUTO_INCREMENT, `name` text, PRIMARY KEY (`id`))', [],  function (err) {
-      console.log('======', err);
       done();
     });
   });
