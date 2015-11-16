@@ -5,14 +5,14 @@ var Field = require('../../lib/type');
 var should = require("should");
 var config = require('../conf/config');
 
-describe("lib/table.js", function () {
+describe("lib/table.js", function() {
   var databaseCfg = config.database;
 
   var db = database.getPool(databaseCfg);
 
-  before(function () {
+  before(function() {
     // create test table
-    db.query('create table `test` (`id` int, `name` text)', [],  function () {});
+    db.query('create table `test` (`id` int, `name` text)', [], function() {});
   });
 
   var table = new Table("test", [
@@ -37,21 +37,21 @@ describe("lib/table.js", function () {
     indices: []
   });
 
-  describe('findById', function () {
+  describe('findById', function() {
 
-    context("when invoke findById with array ids", function () {
-      context("when pks.length equals to array.length", function () {
-        it('should be successful', function (done) {
-          table.findById([1], function (err) {
+    context("when invoke findById with array ids", function() {
+      context("when pks.length equals to array.length", function() {
+        it('should be successful', function(done) {
+          table.findById([1], function(err) {
             should.not.exist(err);
             done();
           });
         });
       });
 
-      context("when pks.length not equals to array.length", function () {
-        it("should got an Error", function (done) {
-          table.findById([1, 'non-exist'], function (err) {
+      context("when pks.length not equals to array.length", function() {
+        it("should got an Error", function(done) {
+          table.findById([1, 'non-exist'], function(err) {
             should.exist(err);
             done();
           });
@@ -59,28 +59,28 @@ describe("lib/table.js", function () {
       });
     });
 
-    context("when invoke findById with an json object", function () {
-      it("should be successful", function (done) {
-        table.findById({ id: 1 }, function (err) {
+    context("when invoke findById with an json object", function() {
+      it("should be successful", function(done) {
+        table.findById({ id: 1 }, function(err) {
           should.not.exist(err);
           done();
         });
       });
     });
 
-    context("when invoke findById with one id", function () {
-      context('when id in pks list', function () {
-        it('should be successful', function (done) {
-          table.findById(1, function (err) {
+    context("when invoke findById with one id", function() {
+      context('when id in pks list', function() {
+        it('should be successful', function(done) {
+          table.findById(1, function(err) {
             should.not.exist(err);
             done();
           });
         });
       });
 
-      context("when id not in pks list", function () {
-        it('should not got an Error', function (done) {
-          table.findById('non-exist', function (err) {
+      context("when id not in pks list", function() {
+        it('should not got an Error', function(done) {
+          table.findById('non-exist', function(err) {
             should.not.exist(err);
             done();
           });
@@ -89,11 +89,11 @@ describe("lib/table.js", function () {
     });
   });
 
-  describe('insert', function () {
+  describe('insert', function() {
     var model = new Model();
 
-    it('should be successful', function (done) {
-      table.insert(model, function (err, model) {
+    it('should be successful', function(done) {
+      table.insert(model, function(err, model) {
         // table.findById();
         // console.log(model);
         should.exist(model);
@@ -102,34 +102,34 @@ describe("lib/table.js", function () {
     });
   });
 
-  describe('delete', function () {
+  describe('delete', function() {
     var model = new Model();
 
-    it('should not be failure', function (done) {
-      table.delete(model, function (err, ret) {
+    it('should not be failure', function(done) {
+      table.delete(model, function(err, ret) {
         ret.should.be.true();
         done();
       });
     });
   });
 
-  describe('update', function () {
+  describe('update', function() {
     var model = new Model();
 
-    it('should not be failure if no attrs need to update', function (done) {
-      table.update(model, function (err, ret) {
+    it('should not be failure if no attrs need to update', function(done) {
+      table.update(model, function(err, ret) {
         ret.should.not.be.true();
         done();
       });
     });
 
-    it('should eval the sql', function (done) {
+    it('should eval the sql', function(done) {
       var model = new Model();
       model.test = 'a';
       model.test_test = 'b';
       model.id = '9';
       model.name = "testname";
-      table.update(model, function (err, ret) {
+      table.update(model, function(err, ret) {
         should.not.exist(err);
         done();
       });

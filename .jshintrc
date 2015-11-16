@@ -3,5 +3,6 @@
   "noarg": true,
   "node": true,
   "undef": true,
-  "unused": "vars"
+  "unused": "vars, should",
+  "esnext": true
 }
