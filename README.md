@@ -32,7 +32,7 @@ model.after('delete', function(model, callback) {
 #### validations
 to do validations, you need some **"validate"** prefix methods defined on model instance.
 
-validations method will be invoked automaticly only if they had been predefined.
+validations method will be invoked before `insert` and `update` (in fact, after all hook-functions before the real insert/update operation) automaticly only if they had been predefined.
 
 for example:
 ```js
