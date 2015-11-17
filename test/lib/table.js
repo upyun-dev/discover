@@ -94,8 +94,6 @@ describe("lib/table.js", function() {
 
     it('should be successful', function(done) {
       table.insert(model, function(err, model) {
-        // table.findById();
-        // console.log(model);
         should.exist(model);
         done();
       });
@@ -131,6 +129,7 @@ describe("lib/table.js", function() {
       model.name = "testname";
       table.update(model, function(err, ret) {
         should.not.exist(err);
+        ret.should.be.ok();
         done();
       });
     });

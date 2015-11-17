@@ -9,8 +9,8 @@ describe("lib/cache.js", function() {
   context("when initialize cache without option", function() {
     var cache = Cache.init();
 
-    it("should still availiable and fallback into inner-process memory storage", function() {
-      cache.should.be.ok();
+    it('cache should not be instance of Memcached', function() {
+      cache.constructor.should.not.be.eql(Memcached);
     });
 
     it("get should be availiable", function(done) {

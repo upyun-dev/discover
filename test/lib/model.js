@@ -37,6 +37,7 @@ describe('lib/model.js', function() {
 
     context('when invoke a funcName on the NewModel', function() {
       it('method should exists and throw an error', function() {
+        should.exists(Model.findByTest);
         should.throws(Model.findByTest, Error);
       });
     });

@@ -8,7 +8,7 @@ describe("lib/type.js", function() {
   var int = new Field.int();
   var date = new Field.date();
 
-  context("toDB", function() {
+  describe("toDB", function() {
     it("raw abstract type should return original value", function() {
       abstract.toDB("a").should.equal("a");
     });
@@ -20,7 +20,8 @@ describe("lib/type.js", function() {
       });
 
       it('null or undefined value should return it own', function() {
-        should.equal(json.toDB(), undefined);
+        should.deepEqual(json.toDB(), undefined);
+        should.deepEqual(json.toDB(null), null);
       });
     });
 
@@ -35,7 +36,7 @@ describe("lib/type.js", function() {
     });
   });
 
-  context('fromDB', function() {
+  describe('fromDB', function() {
     it('raw type should return the original value', function() {
       abstract.fromDB('a').should.equal('a');
     });
@@ -63,7 +64,7 @@ describe("lib/type.js", function() {
     });
   });
 
-  context('defaultValue', function() {
+  describe('defaultValue', function() {
     it('raw type return null', function() {
       should.not.exist(abstract.defaultValue());
     });
