@@ -35,5 +35,6 @@
   "validateLineBreaks": "LF",
   "validateNewlineAfterArrayElements": { "ignoreBrackets": true },
   "validateParameterSeparator": ", ",
+  "validateQuoteMarks": "'",
   "validateIndentation": 2
 }

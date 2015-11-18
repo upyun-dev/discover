@@ -1,21 +1,21 @@
-var should = require("should");
+var should = require('should');
 var Field = require('../../lib/type');
-var moment = require("moment");
+var moment = require('moment');
 
-describe("lib/type.js", function() {
+describe('lib/type.js', function() {
   var abstract = new Field.raw();
   var json = new Field.json();
   var int = new Field.int();
   var date = new Field.date();
 
-  describe("toDB", function() {
-    it("raw abstract type should return original value", function() {
-      abstract.toDB("a").should.equal("a");
+  describe('toDB', function() {
+    it('raw abstract type should return original value', function() {
+      abstract.toDB('a').should.equal('a');
     });
 
     context('for json type', function() {
-      it("json type should return the stringified value", function() {
-        json.toDB({ name: 'Discover', version: "0.1.6" })
+      it('json type should return the stringified value', function() {
+        json.toDB({ name: 'Discover', version: '0.1.6' })
         .should.equal('{"name":"Discover","version":"0.1.6"}');
       });
 
@@ -26,7 +26,7 @@ describe("lib/type.js", function() {
     });
 
     context('for date type', function() {
-      it("date type should return a stringified-format notation", function() {
+      it('date type should return a stringified-format notation', function() {
         var now = Date.now();
         date.toDB(now).should.equal(moment(now).format('YYYY-MM-DD HH:mm:ss'));
       });
@@ -50,8 +50,8 @@ describe("lib/type.js", function() {
         should.deepEqual(json.fromDB(), undefined);
         should.deepEqual(json.fromDB(null), null);
       });
-      it("a non-standard json should return null", function() {
-        should.not.exist(json.fromDB("non"));
+      it('a non-standard json should return null', function() {
+        should.not.exist(json.fromDB('non'));
       });
     });
     context('for date type', function() {

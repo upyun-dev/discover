@@ -1,11 +1,11 @@
-var Table = require("../../lib/table");
+var Table = require('../../lib/table');
 var model = require('../../lib/model');
-var database = require("../../lib/database");
+var database = require('../../lib/database');
 var Field = require('../../lib/type');
-var should = require("should");
+var should = require('should');
 var config = require('../conf/config');
 
-describe("lib/table.js", function() {
+describe('lib/table.js', function() {
   var databaseCfg = config.database;
 
   var db = database.getPool(databaseCfg);
@@ -15,9 +15,9 @@ describe("lib/table.js", function() {
     db.query('create table `test` (`id` int, `name` text)', [], function() {});
   });
 
-  var table = new Table("test", [
-    new Field.int({ name: "id", pk: true }),
-    new Field.int({ name: "name" })
+  var table = new Table('test', [
+    new Field.int({ name: 'id', pk: true }),
+    new Field.int({ name: 'name' })
   ], db);
 
   var Model = model.init({ db: databaseCfg })({
@@ -39,7 +39,7 @@ describe("lib/table.js", function() {
 
   describe('findById', function() {
 
-    context("when invoke findById with array ids", function() {
+    context('when invoke findById with array ids', function() {
       it('should be successful when pks.length equals to array.length', function(done) {
         table.findById([1], function(err) {
           should.not.exist(err);
@@ -47,7 +47,7 @@ describe("lib/table.js", function() {
         });
       });
 
-      it("should got an Error when pks.length not equals to array.length", function(done) {
+      it('should got an Error when pks.length not equals to array.length', function(done) {
         table.findById([1, 'non-exist'], function(err) {
           should.exist(err);
           done();
@@ -56,7 +56,7 @@ describe("lib/table.js", function() {
     });
 
     context('when invoke findById with an json object', function() {
-      it("should be successful", function(done) {
+      it('should be successful', function(done) {
         table.findById({ id: 1 }, function(err) {
           should.not.exist(err);
           done();
@@ -64,7 +64,7 @@ describe("lib/table.js", function() {
       });
     });
 
-    context("when invoke findById with one id", function() {
+    context('when invoke findById with one id', function() {
       it('should be successful when id in pks list', function(done) {
         table.findById(1, function(err) {
           should.not.exist(err);
@@ -118,7 +118,7 @@ describe("lib/table.js", function() {
       model.test = 'a';
       model.test_test = 'b';
       model.id = '9';
-      model.name = "testname";
+      model.name = 'testname';
       table.update(model, function(err, ret) {
         should.not.exist(err);
         ret.should.be.ok();

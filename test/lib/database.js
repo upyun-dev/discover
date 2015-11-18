@@ -1,8 +1,8 @@
-var should = require("should");
-var database = require("../../lib/database");
+var should = require('should');
+var database = require('../../lib/database');
 var config = require('../conf/config');
 
-describe("lib/database.js", function() {
+describe('lib/database.js', function() {
   var databaseCfg = config.database;
   var dupDatabaseCfg = config.dupDatabase;
 
@@ -14,31 +14,31 @@ describe("lib/database.js", function() {
     });
   });
 
-  context("when invoke getPool without an argument", function() {
-    it("should throw an Error", function() {
+  context('when invoke getPool without an argument', function() {
+    it('should throw an Error', function() {
       should.throws(database.getPool, Error);
     });
   });
 
-  context("when invoke getPool with an argument but without the spec-field", function() {
-    it("should return the pool object include the field 'query' and 'next_sequence'", function() {
+  context('when invoke getPool with an argument but without the spec-field', function() {
+    it('should return the pool object include the field query and next_sequence', function() {
       var pool = database.getPool({});
       pool.should.have.properties(['query', 'next_sequence']);
     });
   });
 
-  context("when invoke getPool with the right-configured argument", function() {
+  context('when invoke getPool with the right-configured argument', function() {
     var pool = database.getPool(databaseCfg);
-    var sql = "select * from sequence";
-    var name = "sequence";
+    var sql = 'select * from sequence';
+    var name = 'sequence';
     var value = [];
 
-    it("should return the pool object include the field 'query' and 'next_sequence'", function() {
+    it('should return the pool object include the field query and next_sequence', function() {
       pool.should.have.properties(['query', 'next_sequence']);
     });
 
-    context("when query without argument 'value'", function() {
-      it("query method should be evaluate successfully", function(done) {
+    context('when query without argument value', function() {
+      it('query method should be evaluate successfully', function(done) {
         pool.query(sql, function(err, rows, fields) {
           should.not.exist(err);
           done();
@@ -46,8 +46,8 @@ describe("lib/database.js", function() {
       });
     });
 
-    context("when query with argument 'value'", function() {
-      it("query method should be evaluate successfully", function(done) {
+    context('when query with argument value', function() {
+      it('query method should be evaluate successfully', function(done) {
         pool.query(sql, value, function(err, rows, fields) {
           should.not.exist(err);
           arguments.length.should.be.above(1);
@@ -56,17 +56,17 @@ describe("lib/database.js", function() {
       });
     });
 
-    context("when execute an empty query", function() {
-      it("callback should be invoked with the err", function(done) {
-        pool.query("", value, function(err) {
+    context('when execute an empty query', function() {
+      it('callback should be invoked with the err', function(done) {
+        pool.query('', value, function(err) {
           should.exist(err);
           done();
         });
       });
     });
 
-    context("when Table 'sequence' exist", function() {
-      it("next_sequence should generate inc-id", function(done) {
+    context('when Table sequence exist', function() {
+      it('next_sequence should generate inc-id', function(done) {
         pool.next_sequence(name, function(err, id) {
           should.exist(id);
           pool.next_sequence(name, function(err, newId) {
@@ -77,7 +77,7 @@ describe("lib/database.js", function() {
       });
     });
 
-    context("when eval a query on a pool which size is not enough", function() {
+    context('when eval a query on a pool which size is not enough', function() {
       it('should got an error on callback', function(done) {
         var pool = database.getPool(dupDatabaseCfg);
         pool.query('select', function(err) {
@@ -87,7 +87,7 @@ describe("lib/database.js", function() {
       });
     });
 
-    context("when eval next_sequence with a db that doesn't has a sequence Table", function() {
+    context('when eval next_sequence with a db that doesn\'t has a sequence Table', function() {
       var pool = database.getPool(dupDatabaseCfg);
       it('should got an error on callback', function(done) {
         pool.next_sequence(name, function(err) {
