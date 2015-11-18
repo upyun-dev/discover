@@ -63,7 +63,7 @@ describe("lib/table.js", function() {
         });
       });
     });
-    
+
     context("when invoke findById with one id", function() {
       it('should be successful when id in pks list', function(done) {
         table.findById(1, function(err) {

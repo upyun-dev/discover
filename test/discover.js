@@ -1,6 +1,6 @@
 var discover = require("../lib/discover");
-var should = require("should");
 var config = require('./conf/config');
+require("should");
 
 describe("lib/discover.js", function() {
   var databaseCfg = config.database;
