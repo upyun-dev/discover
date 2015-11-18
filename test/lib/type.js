@@ -31,7 +31,8 @@ describe("lib/type.js", function() {
         date.toDB(now).should.equal(moment(now).format('YYYY-MM-DD HH:mm:ss'));
       });
       it('null or undefined value should return it own', function() {
-        should.equal(date.toDB(), undefined);
+        should.deepEqual(date.toDB(), undefined);
+        should.deepEqual(date.toDB(null), null);
       });
     });
   });
@@ -46,7 +47,8 @@ describe("lib/type.js", function() {
       });
 
       it('null or undefined value should return it own', function() {
-        should.equal(json.fromDB(), undefined);
+        should.deepEqual(json.fromDB(), undefined);
+        should.deepEqual(json.fromDB(null), null);
       });
       it("a non-standard json should return null", function() {
         should.not.exist(json.fromDB("non"));
@@ -59,7 +61,8 @@ describe("lib/type.js", function() {
       });
 
       it('null or undefined value should return it own', function() {
-        should.equal(date.fromDB(), undefined);
+        should.deepEqual(date.fromDB(), undefined);
+        should.deepEqual(date.fromDB(null), null);
       });
     });
   });
@@ -69,10 +72,10 @@ describe("lib/type.js", function() {
       should.not.exist(abstract.defaultValue());
     });
     it('json type return {}', function() {
-      Object.keys(json.defaultValue()).length.should.equal(0);
+      Object.keys(json.defaultValue()).length.should.deepEqual(0);
     });
     it('int return 0', function() {
-      int.defaultValue().should.equal(0);
+      int.defaultValue().should.deepEqual(0);
     });
     it('date return now', function() {
       date.defaultValue().constructor.should.be.equal(Date);
