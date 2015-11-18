@@ -40,26 +40,22 @@ describe("lib/table.js", function() {
   describe('findById', function() {
 
     context("when invoke findById with array ids", function() {
-      context("when pks.length equals to array.length", function() {
-        it('should be successful', function(done) {
-          table.findById([1], function(err) {
-            should.not.exist(err);
-            done();
-          });
+      it('should be successful when pks.length equals to array.length', function(done) {
+        table.findById([1], function(err) {
+          should.not.exist(err);
+          done();
         });
       });
 
-      context("when pks.length not equals to array.length", function() {
-        it("should got an Error", function(done) {
-          table.findById([1, 'non-exist'], function(err) {
-            should.exist(err);
-            done();
-          });
+      it("should got an Error when pks.length not equals to array.length", function(done) {
+        table.findById([1, 'non-exist'], function(err) {
+          should.exist(err);
+          done();
         });
       });
     });
 
-    context("when invoke findById with an json object", function() {
+    context('when invoke findById with an json object', function() {
       it("should be successful", function(done) {
         table.findById({ id: 1 }, function(err) {
           should.not.exist(err);
@@ -67,23 +63,19 @@ describe("lib/table.js", function() {
         });
       });
     });
-
+    
     context("when invoke findById with one id", function() {
-      context('when id in pks list', function() {
-        it('should be successful', function(done) {
-          table.findById(1, function(err) {
-            should.not.exist(err);
-            done();
-          });
+      it('should be successful when id in pks list', function(done) {
+        table.findById(1, function(err) {
+          should.not.exist(err);
+          done();
         });
       });
 
-      context("when id not in pks list", function() {
-        it('should not got an Error', function(done) {
-          table.findById('non-exist', function(err) {
-            should.not.exist(err);
-            done();
-          });
+      it('should not got an Error when id not in pks list', function(done) {
+        table.findById('non-exist', function(err) {
+          should.not.exist(err);
+          done();
         });
       });
     });
