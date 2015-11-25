@@ -1,47 +1,48 @@
 
 ### Hooks
-Discover support hook mechanism.
-
-#### methodHooks
-for method-based hooks, define like this:
+Discover now supports hook mechanism.
 
 ##### Before Hook
 ```js
-model.before('insert', function(model, callback) {
+Model.before('insert', function(done) {
+  // `this` => the Model instance
   console.log('before insert operation');
-  if (has error)
-    callback(err);
-  else
-    callback(null);
+  // must be called when the current task done !
+  done(err);
 });
 ```
 
 ##### After Hook
 ```js
-model.after('delete', function(model, callback) {
+Model.after('delete', function(done) {
+  // `this` => the Model instance
   console.log('after delete operation');
-  if (has error)
-    callback(err);
-  else
-    callback(null);
+  // must be called when the current task done !
+  done(err);
 });
 ```
 
-*note: we now only permit defining hooks on method `insert`, `update`, `delete`.*
+*note 1: we now only permit defining hooks on method `insert`, `update`, `delete`.*
+
+_note 2: hooks and the hooked method will suspend when the former failed._
+
+*note 3: all tasks execute in series in the order of how they defined before.*
 
 #### validations
 to do validations, you need some **"validate"** prefix methods defined on model instance.
 
-validations method will be invoked before `insert` and `update` (in fact, after all hook-functions before the real insert/update operation) automaticly only if they had been predefined.
+validations method will be invoked before `insert` and `update` (in fact, after all hook-functions and before the real insert/update operation) automaticly only if they had been predefined.
 
 for example:
 ```js
-model.validateFields = function(attr, callback) {
-  if (all check passed)
+model.validateFields = function(callback) {
+  if (validate)
     callback(null);
   else
     callback(new Error('balabala'));
 };
 ```
 
-then, when invoking either '`insert`' or '`update`', `validateFields` will be executed.
+then, `validateFields` will be executed automaticly when invoking either '`insert`' or '`update`'.
+
+*note: to do validations automaticly, be sure they belong to the `prototype` of the Model*
