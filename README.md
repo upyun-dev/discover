@@ -4,9 +4,11 @@ Discover now supports hook mechanism.
 
 ##### Before Hook
 ```js
+var Model = require('discover').Model();
+
 Model.before('insert', function(done) {
   // `this` => the Model instance
-  console.log('before insert operation');
+  console.info('before insert operation');
   // must be called when the current task done !
   done(err);
 });
@@ -16,7 +18,7 @@ Model.before('insert', function(done) {
 ```js
 Model.after('delete', function(done) {
   // `this` => the Model instance
-  console.log('after delete operation');
+  console.info('after delete operation');
   // must be called when the current task done !
   done(err);
 });
@@ -36,7 +38,7 @@ validations method will be invoked before `insert` and `update` (in fact, after 
 for example:
 ```js
 model.validateFields = function(callback) {
-  if (validate)
+  if (valid)
     callback(null);
   else
     callback(new Error('balabala'));
