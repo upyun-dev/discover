@@ -26,7 +26,7 @@ Model.after('delete', function(done) {
 
 *note 1: we now only permit defining hooks on method `insert`, `update`, `delete`.*
 
-_note 2: hooks and the hooked method will suspend when the former failed._
+*note 2: hooks and the hooked method will suspend when the former failed.*
 
 *note 3: all tasks execute in series in the order of how they defined before.*
 
