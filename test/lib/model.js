@@ -1,11 +1,14 @@
 var should = require('should');
-var model = require('../../lib/model');
 var config = require('../conf/config');
+var database = require('../../lib/database');
+var db = database.getPool(config.database);
+var cache = require('../../lib/cache').init();
+var model = require('../../lib/model').init({
+  db: db,
+  cache: cache
+});
 
 describe('lib/model.js', function() {
-  var databaseCfg = config.database;
-
-  model = model.init({ db: databaseCfg });
   var Model = model({
     tableName: 'test',
     fields: [{

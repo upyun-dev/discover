@@ -4,6 +4,7 @@ var database = require('../../lib/database');
 var Field = require('../../lib/type');
 var should = require('should');
 var config = require('../conf/config');
+var cache = require('../../lib/cache').init();
 
 describe('lib/table.js', function() {
   var databaseCfg = config.database;
@@ -20,7 +21,7 @@ describe('lib/table.js', function() {
     new Field.int({ name: 'name' })
   ], db);
 
-  var Model = model.init({ db: databaseCfg })({
+  var Model = model.init({ db: databaseCfg, cache: cache })({
     tableName: 'test',
     fields: [{
       unique: true,
