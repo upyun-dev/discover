@@ -3,9 +3,11 @@ config = require '../conf/config'
 database = require '../../lib/database'
 cache = require('../../lib/cache').init()
 db = database.getPool config.database
-ModelGen = require('../../lib/model').init db: db, cache: cache
+ModelFactory = require('../../lib/model').init db: db, cache: cache
+# cache the Criteria module before continue
+require('../../lib/criteria').init db: db, cache: cache
 
-Model = ModelGen
+Model = ModelFactory
   tableName: 'common_test'
   fields: [
     {
@@ -22,7 +24,7 @@ Model = ModelGen
   ]
   indices: []
 
-model = new Model 'non_uniq': 1, 'uniq': 2, 'id': 2333
+model = new Model 'non_uniq': 1, 'uniq': 2, 'id': 3
 
 describe 'lib/common', ->
   before ->
@@ -30,38 +32,6 @@ describe 'lib/common', ->
     db.query 'create table `common_test` (`id` int NOT NULL, `uniq` int, `non_uniq` int, PRIMARY KEY (`id`))', [], (->)
 
   describe 'classMethods', ->
-
-    # describe '.all', ->
-    #   it 'should return the matched items', (done) ->
-    #     Model.all (err, ret) ->
-    #       should.not.exists err
-    #       done()
-    #
-    # describe '.count', ->
-    #   it 'should return the count of the matched items', (done) ->
-    #     Model.count null, (err, count) ->
-    #       should.not.exists err
-    #       done()
-    #
-    #     Model.count {}, (err, count) ->
-    #
-    # describe '.find', ->
-    #
-    # describe '.findOne', ->
-    #
-    # describe '.findWithCount', ->
-    #
-    # describe '.findByIndex', ->
-    #
-    # describe '.findByUniqueKey', ->
-    #
-    # describe '.findById', ->
-    #
-    # describe '.findByIds', ->
-    #
-    # describe '._loadFromDB', ->
-    #
-    # describe '._newInstance', ->
 
     describe '._walk', ->
       it 'should return an array contains the method with specified prefix', ->
@@ -110,6 +80,88 @@ describe 'lib/common', ->
 
         after -> delete Model.prototype.validateErr
 
+    describe '.all', ->
+      it 'should return the matched items', (done) ->
+        Model.all (err, ret) ->
+          should.not.exists err
+          ret[0].attributes.non_uniq.should.equal 1
+          done()
+        , non_uniq: 1
+
+    describe '.count', ->
+      it 'should return the count of the matched items', (done) ->
+        Model.count
+          uniq:
+            op: 'gt'
+            value: 1
+        , (err, count) ->
+          should.not.exists err
+          count.should.equal 1
+          done()
+
+      it 'should be ok when opts contains nothing', (done) ->
+        Model.count {}, (err, count) ->
+          should.not.exists err
+          count.should.equal 1
+          done()
+
+    describe '.find', ->
+      it 'should be ok and return the matched result', (done) ->
+        Model.find
+          uniq: 2
+        , (err, result) ->
+          should.not.exists err
+          result[0].attributes.uniq.should.equal 2
+          done()
+
+    describe '.findOne', ->
+      it 'should be ok and return the certain one item that matches the conditions', (done) ->
+        Model.findOne
+          uniq: 2
+          non_uniq: 1
+        , (err, result) ->
+          should.not.exists err
+          result.attributes.uniq.should.equal 2
+          result.attributes.non_uniq.should.equal 1
+          done()
+
+    describe '.findWithCount', ->
+      it 'should return the matched results with its count', (done) ->
+        Model.findWithCount
+          uniq: 2
+        , (err, ret) ->
+          should.not.exists err
+          ret.should.have.properties ['rows', 'total']
+          done()
+
+    describe '.findByIndex', ->
+      it 'should be ok and return the item with the given index', (done) ->
+        Model.findByIndex 'id', 3, (err, ret) ->
+          should.not.exists err
+          ret[0].attributes.non_uniq.should.equal 1
+          done()
+
+    describe '.findByUniqueKey', ->
+      it 'should be ok and return the item with the given unique key', (done) ->
+        Model.findByUniqueKey 'uniq', 2, (err, result) ->
+          should.not.exists err
+          result.attributes.uniq.should.equal 2
+          done()
+
+    describe '.findById', ->
+      it 'should be ok and return the item with the given id', (done) ->
+        Model.findById 3, (err, ret) ->
+          should.not.exists err
+          ret.attributes.uniq.should.equal 2
+          done()
+
+    describe '.findByIds', ->
+      it 'should be ok and return a group of items with the given ids', (done) ->
+        Model.findByIds [1, 2, 3, 4], (err, ret) ->
+          should.not.exists err
+          (i for i in ret when i?).length.should.equal 1
+          done()
+
     describe '.delete', ->
       it 'should got an error when invoking with a non-model object', ->
         Model.delete {}, (err) ->
@@ -145,6 +197,10 @@ describe 'lib/common', ->
         should.ok Model._isValidMethod 'delete'
         Model._isValidMethod('find').should.be.false()
 
+    # describe '._loadFromDB', ->
+    #
+    # describe '._newInstance', ->
+    #
     # describe '._cacheKey', ->
     #
     # describe '.cleanCache', ->
