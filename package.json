@@ -27,8 +27,6 @@
   "author": "Zola, PenaFong",
   "license": "ISC",
   "devDependencies": {
-    "coffee-coverage": "^0.7.0",
-    "coffee-script": "^1.10.0",
     "gulp": "^3.9.0",
     "gulp-jscs": "^3.0.0",
     "gulp-jshint": "^1.11.2",
