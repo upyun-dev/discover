@@ -63,5 +63,25 @@ describe('lib/cache.js', function() {
         });
       });
     });
+    it('should invoke the on failure callback when emit "failure" event', function(done) {
+      cache
+      .once('failure', function(data) {
+        data.messages[0].should.equal('failure test');
+        done();
+      })
+      .emit('failure', { messages: ['failure test'], server: 'test' });
+    });
+    it('should invoke the on reconnecting when emit "reconnection" event', function(done) {
+      cache
+      .once('reconnecting', function(data) {
+        data.messages[0].should.equal('reconnect test');
+        done();
+      })
+      .emit('reconnecting', {
+        messages: ['reconnect test'],
+        server: 'test',
+        totalDownTime: 2000
+      });
+    });
   });
 });
