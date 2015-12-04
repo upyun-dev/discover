@@ -16,12 +16,12 @@
     "async": "^1.4.2",
     "bignumber.js": "^2.0.7",
     "camelcase": "^2.0.1",
+    "debug": "^2.2.0",
     "generic-pool": "^2.2.0",
     "lodash": "^3.10.1",
     "memcached": "^2.2.0",
     "moment": "^2.10.3",
     "mysql": "^2.9.0",
-    "ulogger": "git+ssh://gitlab@gitlab.widget-inc.com:65422/foundation/ulogger.git#master",
     "underscore": "^1.8.3"
   },
   "author": "Zola, PenaFong",
