@@ -93,4 +93,27 @@ describe('lib/model.js', function() {
       newModel.should.be.ok();
     });
   });
+  
+  describe('initialize', function() {
+    it('should be ok when this.initialize is a function', function() {
+      var Model = model({
+      tableName: 'test',
+        fields: [{
+          unique: true,
+          name: 'test'
+        }, {
+          index: true,
+          name: 'test_test'
+        }, {
+          unique: true,
+          name: 'id'
+        }],
+        indices: []
+      });
+      Model.prototype.initialize = function() {};
+      Model.findByTestTest();
+      var m = new Model();
+      m.should.be.ok();
+    });
+  });
 });

@@ -65,15 +65,28 @@
       });
       describe('.insert', function() {
         it('should got an error when invoking with a non-model object', function(done) {
+          Model.insert({});
           return Model.insert({}, function(err) {
             should.exists(err);
             return done();
           });
         });
-        return context('when invoking with a model', function() {
+        it('should got an error when $table.insert failed', function(done) {
+          var tmp = Model.$table.insert;
+          Model.$table.insert = function(model, cb) {
+            cb(new Error());
+          };
+          Model.insert(model, function(err) {
+            should.exist(err);
+            Model.$table.insert = tmp;
+            done();
+          });
+        });
+        context('when invoking with a model', function() {
           it('should be succeed', function(done) {
             return Model.insert(model, function(err, result) {
               should.exists(result);
+              Model.insert(model);
               return done();
             });
           });
@@ -251,10 +264,21 @@
             return done();
           });
         });
-        return it('should got an error when this.findByIndex got an error', function(done) {
+        it('should got an error when this.findByIndex got an error', function(done) {
           return Model.findByUniqueKey('uniq', 5, function(err, ret) {
             should.not.exist(ret);
             return done();
+          });
+        });
+        it('should got an error when findByIndex failed', function(done) {
+          var tmp = Model.findByIndex;
+          Model.findByIndex = function(k, v, cb) {
+            cb(new Error());
+          };
+          Model.findByUniqueKey('uniq', 5, function(err, ret) {
+            should.exist(err);
+            Model.findByIndex = tmp;
+            done();
           });
         });
       });
@@ -271,6 +295,30 @@
             should.not.exist(err);
             should.not.exist(ret);
             return done();
+          });
+        });
+        it('should got an error when findByIds failed', function(done) {
+          var tmp = Model.findByIds;
+          Model.findByIds = function(ids, cb) {
+            cb(new Error());
+          };
+          Model.findById(5, function(err, ret) {
+            should.exist(err);
+            should.not.exist(ret);
+            Model.findByIds = tmp;
+            done();
+          });
+        });
+        it('should got null when objs.length is 0', function(done) {
+          var tmp = Model.findByIds;
+          Model.findByIds = function(ids, cb) {
+            cb(null, []);
+          };
+          Model.findById(5, function(err, ret) {
+            should.not.exist(err);
+            should.not.exist(ret);
+            Model.findByIds = tmp;
+            done();
           });
         });
         return it('should got an error when this.findByIds got an error', function(done) {
@@ -299,11 +347,61 @@
         it('should throw an error when ids isnt an Array', function() {
           return Model.findByIds.bind(Model, 3).should['throw']();
         });
+        it('should be ok when cache.get failed and _loadFromDB failed', function(done) {
+          var tmp = ModelFactory.cache.get;
+          ModelFactory.cache.get = function(key, callback) {
+            callback(new Error('ggg'), []);
+          };
+          var tmp_loadFromeDB = Model._loadFromDB;
+          Model._loadFromDB = function(kid, callback) {
+            callback(new Error());
+          };
+          Model.findByIds([1, 2, 3, 4], function(err) {
+            should.exist(err);
+            ModelFactory.cache.get = tmp;
+            Model._loadFromDB = tmp_loadFromeDB;
+            done();
+          });
+        });
+        it('should be ok when rows[keys[i]] exists', function(done) {
+          var tmp = ModelFactory.cache.get;
+          var rows = {};
+          [1, 2, 3, 4].forEach(function(id) {
+            rows[Model._cacheKey(id)] = {
+              uniq: 2,
+              non: 1
+            };
+          });
+          ModelFactory.cache.get = function(key, callback) {
+            callback(new Error('ggg'), rows);
+          };
+          Model.findByIds([1, 2, 3, 4], function(err) {
+            should.not. exist(err);
+            ModelFactory.cache.get = tmp;
+            done();
+          }, {
+            json: true,
+            secure: {}
+          });
+        });
         return it('should return empty result when ids.length is zero', function(done) {
           return Model.findByIds([], function(err, ret) {
             should.not.exist(err);
             ret.should.be.empty();
             return done();
+          });
+        });
+      });
+      describe('._loadFromDB', function() {
+        it('should got an error when findById failed', function(done) {
+          var tmp = Model.$table.findById;
+          Model.$table.findById = function(id, cb) {
+            cb(new Error());
+          };
+          Model._loadFromDB(1, function(err) {
+            should.exist(err);
+            Model.$table.findById = tmp;
+            done();
           });
         });
       });
@@ -365,8 +463,20 @@
       });
       describe('.update', function() {
         it('should got an error when invoking with a non-model object', function() {
+          Model.update({});
           return Model.update({}, function(err) {
             return should.exists(err);
+          });
+        });
+        it('should got an error when $table.update failed', function(done) {
+          var tmp = Model.$table.update;
+          Model.$table.update = function(model, cb) {
+            cb(new Error());
+          };
+          Model.update(model, function(err) {
+            should.exist(err);
+            Model.$table.update = tmp;
+            done();
           });
         });
         return context('when invoking with a model', function() {
@@ -376,6 +486,7 @@
               model.uniq = 5;
               return Model.update(model, function(err, result) {
                 should.exist(result);
+                Model.update(model);
                 return done();
               });
             });
@@ -396,8 +507,32 @@
       });
       describe('.delete', function() {
         it('should got an error when invoking with a non-model object', function() {
+          Model.delete({});
           return Model['delete']({}, function(err) {
             return should.exists(err);
+          });
+        });
+        it('should got an error when $table.delete failed', function(done) {
+          var tmp = Model.$table.delete;
+          Model.$table.delete = function(model, cb) {
+            cb(new Error());
+          };
+          Model.delete(model, function(err) {
+            should.exist(err);
+            Model.$table.delete = tmp;
+            done();
+          });
+        });
+        it('should got an null when $table.delete did not worked', function(done) {
+          var tmp = Model.$table.delete;
+          Model.$table.delete = function(model, cb) {
+            cb(null, false);
+          };
+          Model.delete(model, function(err) {
+            should.not.exist(err);
+            Model.delete(model);
+            Model.$table.delete = tmp;
+            done();
           });
         });
         return context('when invoking with a model', function() {
@@ -430,12 +565,28 @@
             ],
             indices: []
           });
+          var SecondModel = ModelFactory({
+            tableName: 'test2',
+            fields: [
+              {
+                column: 'bin',
+                type: 'binary',
+                pk: true
+              }
+            ]
+          });
           defaultModel = new DefaultModel({
             bin: new Buffer('a'),
             uniq: 9
           });
+          var secModel = new SecondModel({
+            bin: new Buffer('c'),
+            uniq: 3
+          });
           should.ok(DefaultModel._cacheKey(defaultModel));
           should.ok(DefaultModel._cacheKey(['', new Buffer('a')]));
+          should.ok(SecondModel._cacheKey(secModel));
+          should.ok(SecondModel._cacheKey({}));
           return should.ok(DefaultModel._cacheKey({}));
         });
       });
@@ -465,6 +616,9 @@
           model.set({
             uniq: 2
           }).should.be.deepEqual(model);
+          model.set({
+            uniq: 2
+          }, null).should.be.deepEqual(model);
           model.set({
             attributes: {
               uniq: 5

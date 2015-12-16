@@ -96,5 +96,31 @@ describe('lib/database.js', function() {
         });
       });
     });
+
+    context('when pool.acquire failed', function() {
+      it('should got an error on callback', function(done) {
+        var pool = database.getPool(databaseCfg);
+        var pools = database.pools;
+        var tmp = pools[databaseCfg.database].acquire;
+        pools[databaseCfg.database].acquire = function(callback) {
+          callback(new Error());
+        };
+        pool.query('', function(err) {
+          should.exist(err);
+          pools[databaseCfg.database].acquire = tmp;
+          done();
+        });
+      });
+    });
+    
+    describe('connectpool.destory', function() {
+      it('should be ok', function() {
+        var pool = database.getPool(databaseCfg);
+        var pools = database.pools;
+        pools[databaseCfg.database].destroy({
+          end: function() {}
+        });
+      });
+    });
   });
 });

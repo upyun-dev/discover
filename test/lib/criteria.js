@@ -28,7 +28,9 @@ var Model = ModelFactory({
   indices: []
 });
 
-var criteria = new Criteria();
+var select = new Criteria.Select(Model);
+var filter = new Criteria.Filter(['uniq', 'non_uniq'], 'gt', '5');
+var criteria = new Criteria(select, filter);
 
 describe('criteria.js', function() {
   describe('.clone', function() {
@@ -36,12 +38,121 @@ describe('criteria.js', function() {
       criteria.clone().constructor.should.deepEqual(Criteria);
     });
   });
+  describe('.limit', function() {
+    it('_limit should be null when pass an null offset', function() {
+      criteria.limit(null);
+      should.not.exist(criteria._limit);
+    });
+  });
+  describe('.orderBy', function() {
+    it('_orderBy should be null when pass an null column', function() {
+      criteria.orderBy(null);
+      should.not.exist(criteria._orderBy);
+    });
+  });
+  describe('.toSQL', function() {
+    it('should be ok when _filter.filters is an embed array', function(done) {
+      criteria._filter = criteria._filter || {};
+      var tmpFilter = criteria._filter.filters;
+      criteria._filter.filters = [
+        [{
+          filters: []
+        }]
+      ];
+      criteria.toSQL().should.be.ok();
+      var db = Criteria.db;
+      tmpQuery = db.query;
+      db.query = function(sql, args, callback) {
+        callback(new Error(), []);
+      };
+      criteria._query(function(err) {
+        should.exist(err);
+        Criteria.db.query = tmpQuery;
+        criteria._filter.filters = tmpFilter;
+        done();
+      });
+    });
+  });
+  describe('.execute', function() {
+    it('should get an error on callback', function(done) {
+      var tmp = criteria._query;
+      criteria._query = function(callback) {
+        callback(Criteria.AGAIN);
+      };
+      criteria.execute(function(err) {
+        should.exist(err);
+        criteria._query = tmp;
+        done();
+      });
+    });
+    
+    it('should query again when err is AGAINs', function(done) {
+      var tmpQuery = criteria._query;
+      criteria._query = function(callback) {
+        callback(null);
+      };
+      var tmp = criteria._select.convertRows;
+      criteria._select.convertRows = function(rows, opts, callback) {
+        callback(Criteria.AGAIN);
+      };
+      criteria.execute(function(err) {
+        should.exist(err);
+        criteria._query= tmpQuery;
+        criteria._select.convertRows = tmp;
+        done();
+      });
+    });
+  });
+  describe('_query', function() {
+    context('when callback not provide', function() {
+      it('should be ok when db.query failed', function() {
+        var tmpSql = criteria.toSQL;
+        var tmpArgs = criteria.getArgs;
+        var tmpQuery = Criteria.db.query;
+        criteria.toSQL = function() {};
+        criteria.getArgs = function() {};
+        Criteria.db.query = function(sql, args, callback) {
+          callback(new Error());
+        };
+        criteria._query().should.be.ok();
+        criteria.toSQL = tmpSql;
+        criteria.getArgs = tmpArgs;
+        Criteria.db.query = tmpQuery;
+      });
+      it('should be ok when db.query success', function() {
+        var tmpSql = criteria.toSQL;
+        var tmpArgs = criteria.getArgs;
+        var tmpQuery = Criteria.db.query;
+        criteria.toSQL = function() {};
+        criteria.getArgs = function() {};
+        Criteria.db.query = function(sql, args, callback) {
+          callback(null);
+        };
+        criteria._query().should.be.ok();
+        criteria.toSQL = tmpSql;
+        criteria.getArgs = tmpArgs;
+        Criteria.db.query = tmpQuery;        
+      });
+    });
+  });
+
   describe('Criteria.Select', function() {
     var select = new Criteria.Select(Model);
     describe('.convertRows', function() {
       it('should be ok', function(done) {
         select.convertRows([1, 2, 3], {}, function(msg) {
           should.exist(msg);
+          done();
+        });
+      });
+      it('should got an error when model.findByIds failed', function(done) {
+        var tmp = select._model.findByIds;
+        select._model.findByIds = function(rows, callback) {
+          callback(new Error());
+        };
+        select.convertRows([1, 2, 3], {}, function(err) {
+          should.exist(err);
+          select._model.findByIds = tmp;
           done();
         });
       });
@@ -82,6 +193,33 @@ describe('criteria.js', function() {
           done();
         });
       });
+      it('should return 0 when the rows isnt exist or empty', function(done) {
+        max.convertRows(null, {}, function(err, counts) {
+          should.not.exist(err);
+          counts.should.equal(0);
+          max.convertRows([], {}, function(err, counts) {
+            should.not.exist(err);
+            counts.should.equal(0);
+            done();
+          });
+        });
+      });
+    });
+  });
+  describe('Criteria.Select.Count', function() {
+    var count = new Criteria.Select.Count(Model);
+    describe('.convertRows', function() {
+      it('should return 0 when the rows isnt exist or empty', function(done) {
+        count.convertRows(null, {}, function(err, counts) {
+          should.not.exist(err);
+          counts.should.equal(0);
+          count.convertRows([], {}, function(err, counts) {
+            should.not.exist(err);
+            counts.should.equal(0);
+            done();
+          });
+        });
+      });
     });
   });
   describe('Criteria.Select.Sum', function() {
@@ -103,6 +241,41 @@ describe('criteria.js', function() {
           row.should.equal(1);
           done();
         });
+      });
+      it('should return null when the rows isnt exist or empty', function(done) {
+        sum.convertRows(null, {}, function(err, counts) {
+          should.not.exist(err);
+          should.not.exist(counts);
+          sum.convertRows([], {}, function(err, counts) {
+            should.not.exist(err);
+            should.not.exist(counts);
+            done();
+          });
+        });
+      });
+    });
+  });
+  describe('Criteria.Limit', function() {
+    var limit = new Criteria.Limit();
+    it('should be ok when limit is null', function() {
+      limit.should.be.ok();
+    });
+    describe('.toSQL', function() {
+      it('should be ok if _offset does not exist', function() {
+        limit.toSQL().should.be.ok();
+      });
+    });
+    describe('.getArgs', function() {
+      it('should be ok', function() {
+        limit.getArgs().should.be.ok();
+      });
+    });
+  });
+  describe('Criteria.OrderBy', function() {
+    var orderBy = new Criteria.OrderBy();
+    describe('toSQL', function() {
+      it('should be ok', function() {
+        orderBy.toSQL().should.be.ok();
       });
     });
   });
@@ -129,7 +302,7 @@ describe('criteria.js', function() {
   });
   describe('Criteria.id', function() {
     it('should return the new instance of Criteria', function() {
-      Criteria.select(Model).constructor.should.deepEqual(Criteria);
+      Criteria.id(Model).constructor.should.deepEqual(Criteria);
     });
   });
   describe('Criteria.max', function() {
