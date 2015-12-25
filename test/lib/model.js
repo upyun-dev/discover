@@ -93,11 +93,11 @@ describe('lib/model.js', function() {
       newModel.should.be.ok();
     });
   });
-  
+
   describe('initialize', function() {
     it('should be ok when this.initialize is a function', function() {
       var Model = model({
-      tableName: 'test',
+        tableName: 'test',
         fields: [{
           unique: true,
           name: 'test'

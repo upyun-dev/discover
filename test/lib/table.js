@@ -227,9 +227,8 @@ describe('lib/table.js', function() {
         done();
       });
     });
-    
+
     it('should be ok when callback is not provide', function() {
-      var tmp = table.nonPKFields;
       table.nonPKFields = [];
       model.test = 'p';
       model.test_test = 't';

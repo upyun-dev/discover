@@ -61,7 +61,7 @@ describe('criteria.js', function() {
       ];
       criteria.toSQL().should.be.ok();
       var db = Criteria.db;
-      tmpQuery = db.query;
+      var tmpQuery = db.query;
       db.query = function(sql, args, callback) {
         callback(new Error(), []);
       };
@@ -85,7 +85,7 @@ describe('criteria.js', function() {
         done();
       });
     });
-    
+
     it('should query again when err is AGAINs', function(done) {
       var tmpQuery = criteria._query;
       criteria._query = function(callback) {
@@ -97,7 +97,7 @@ describe('criteria.js', function() {
       };
       criteria.execute(function(err) {
         should.exist(err);
-        criteria._query= tmpQuery;
+        criteria._query = tmpQuery;
         criteria._select.convertRows = tmp;
         done();
       });
@@ -131,7 +131,7 @@ describe('criteria.js', function() {
         criteria._query().should.be.ok();
         criteria.toSQL = tmpSql;
         criteria.getArgs = tmpArgs;
-        Criteria.db.query = tmpQuery;        
+        Criteria.db.query = tmpQuery;
       });
     });
   });

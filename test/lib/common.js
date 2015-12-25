@@ -352,14 +352,14 @@
           ModelFactory.cache.get = function(key, callback) {
             callback(new Error('ggg'), []);
           };
-          var tmp_loadFromeDB = Model._loadFromDB;
+          var tmpLoadFromDB = Model._loadFromDB;
           Model._loadFromDB = function(kid, callback) {
             callback(new Error());
           };
           Model.findByIds([1, 2, 3, 4], function(err) {
             should.exist(err);
             ModelFactory.cache.get = tmp;
-            Model._loadFromDB = tmp_loadFromeDB;
+            Model._loadFromDB = tmpLoadFromDB;
             done();
           });
         });

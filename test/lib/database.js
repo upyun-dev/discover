@@ -112,10 +112,9 @@ describe('lib/database.js', function() {
         });
       });
     });
-    
+
     describe('connectpool.destory', function() {
       it('should be ok', function() {
-        var pool = database.getPool(databaseCfg);
         var pools = database.pools;
         pools[databaseCfg.database].destroy({
           end: function() {}
