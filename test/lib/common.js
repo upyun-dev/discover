@@ -51,7 +51,14 @@
     });
     describe('classMethods', function() {
       describe('._walk', function() {
-        return it('should return an array contains the method with specified prefix', function(done) {
+        it('should return an array contains the method with specified prefix when there are not any validate methods', function(done) {
+          Model._walk(model, 'validate', function(ret) {
+            ret.length.should.equal(0);
+            done();
+          });
+        });
+
+        it('should return an array contains the method with specified prefix', function(done) {
           var ret;
           Model.prototype.validateFoo = function(callback) {
             return callback(null);
@@ -62,6 +69,27 @@
           Model._walk(model, 'validate', function(ret) {
             ret.length.should.equal(2);
             done();
+          });
+        });
+
+        context('when validate methods update', function() {
+          it('should return an array contains the method with specified prefix  if it still be a function', function(done) {
+            Model.prototype.validateFoo = function(callback) {
+              if (callback)
+                callback(null);
+            };
+            Model._walk(model, 'validate', function(ret) {
+              ret.length.should.equal(2);
+              done();
+            });
+          });
+
+          it('should return an array contains the method with specified prefix  if it is no longer a function', function(done) {
+            Model.prototype.validateFoo = null;
+            Model._walk(model, 'validate', function(ret) {
+              ret.length.should.equal(1);
+              done();
+            });
           });
         });
       });
