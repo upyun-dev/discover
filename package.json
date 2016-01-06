@@ -1,5 +1,5 @@
 {
-  "name": "discover",
+  "name": "@upyun-dev/discover",
   "version": "0.1.8",
   "description": "ORM",
   "main": "index.js",
