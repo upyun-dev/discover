@@ -51,7 +51,7 @@
     });
     describe('classMethods', function() {
       describe('._walk', function() {
-        return it('should return an array contains the method with specified prefix', function() {
+        return it('should return an array contains the method with specified prefix', function(done) {
           var ret;
           Model.prototype.validateFoo = function(callback) {
             return callback(null);
@@ -59,8 +59,10 @@
           Model.prototype.validateBar = function(callback) {
             return callback(null);
           };
-          ret = Model._walk(model, 'validate');
-          return ret.length.should.equal(2);
+          Model._walk(model, 'validate', function(ret) {
+            ret.length.should.equal(2);
+            done();
+          });
         });
       });
       describe('.insert', function() {
