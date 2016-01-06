@@ -47,4 +47,5 @@ model.validateFields = function(callback) {
 
 then, `validateFields` will be executed automaticly when invoking either '`insert`' or '`update`'.
 
-*note: to do validations automaticly, be sure they belong to the `prototype` of the Model*
++ *note: to do validations automaticly, be sure they belong to the `prototype` of the Model*
++ *note: the validation methods will auto-execute **in the order of how they defined***
