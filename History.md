@@ -14,3 +14,6 @@
 * 添加 validation 方法执行顺序说明文档
 * 优化 insert 以及 update 性能
 
+0.1.9 / 2016-01-08
+
+* Change package name back to discover
