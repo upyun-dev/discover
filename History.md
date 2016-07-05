@@ -17,3 +17,8 @@
 0.1.9 / 2016-01-08
 
 * Change package name back to discover
+
+0.1.10 / 2016-07-05
+
+* 不再使用 Object.observe
+* 在 after hooks 调用之后再对 model 进行 clear 操作
