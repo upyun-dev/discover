@@ -7,6 +7,8 @@ var model = require('../../lib/model').init({
   db: db,
   cache: cache
 });
+var Criteria = require('../../lib/criteria');
+Criteria.init({ db: db, cache: cache });
 
 describe('lib/model.js', function() {
   var Model = model({
@@ -26,12 +28,12 @@ describe('lib/model.js', function() {
         unique: true,
         name: 'test'
       }, {
-        unique: true,
-        name: 'test_test'
-      }, {
-        unique: true,
-        name: 'id'
-      }],
+          unique: true,
+          name: 'test_test'
+        }, {
+          unique: true,
+          name: 'id'
+        }],
       indices: []
     });
     it('should be success', function() {
@@ -86,6 +88,24 @@ describe('lib/model.js', function() {
     });
   });
 
+  context('when model field name is "domain"', function() {
+    var DomainModel = model({
+      tableName: 'test_domain',
+      fields: [{
+        unique: true,
+        name: 'domain'
+      }],
+      indices: []
+    });
+    var domainModel = new DomainModel({
+      domain: 'domainValue'
+    });
+
+    it('should be success', function() {
+      domainModel.domain.should.be.equal('domainValue');
+    });
+  });
+
   describe('instance', function() {
     it('should be success', function() {
       var CustomModel = Model;
@@ -95,25 +115,29 @@ describe('lib/model.js', function() {
   });
 
   describe('initialize', function() {
-    it('should be ok when this.initialize is a function', function() {
+    it('should be ok when this.initialize is a function', function(done) {
       var Model = model({
         tableName: 'test',
         fields: [{
           unique: true,
           name: 'test'
         }, {
-          index: true,
-          name: 'test_test'
-        }, {
-          unique: true,
-          name: 'id'
-        }],
+            index: true,
+            name: 'test_test'
+          }, {
+            unique: true,
+            name: 'id'
+          }],
         indices: []
       });
+      Model.prototype._initialize = Model.prototype.initialize;
       Model.prototype.initialize = function() {};
-      Model.findByTestTest();
-      var m = new Model();
-      m.should.be.ok();
+      Model.findByTestTest('', function () {
+        var m = new Model();
+        m.should.be.ok();
+        Model.prototype.initialize = Model.prototype._initialize;
+        done();
+      });
     });
   });
 });
