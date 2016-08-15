@@ -6,3 +6,4 @@ node_modules
 test/conf/config.js
 *.coffee
 *.log
+.vscode/
