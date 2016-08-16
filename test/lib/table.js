@@ -22,7 +22,7 @@ describe('lib/table.js', function() {
     new Field.int({ column: 'col', auto: true })
   ], db);
 
-  var Model = model.init({ db: databaseCfg, cache: cache })({
+  var Model = model.init({ db: db, cache: cache })({
     tableName: 'test',
     fields: [{
       unique: true,
