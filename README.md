@@ -1,3 +1,7 @@
+### Dependencies
+
++ mysqld
++ memcached
 
 ### Hooks
 Discover now supports hook mechanism.

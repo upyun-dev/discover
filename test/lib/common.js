@@ -17,10 +17,10 @@
     cache: cache
   });
 
-  require('../../lib/criteria').init({
-    db: db,
-    cache: cache
-  });
+  // require('../../lib/criteria').init({
+  //   db: db,
+  //   cache: cache
+  // });
 
   Model = ModelFactory({
     tableName: 'common_test',
@@ -378,8 +378,8 @@
           return Model.findByIds.bind(Model, 3).should['throw']();
         });
         it('should be ok when cache.get failed and _loadFromDB failed', function(done) {
-          var tmp = ModelFactory.cache.get;
-          ModelFactory.cache.get = function(key, callback) {
+          var tmp = Model.cache.get;
+          Model.cache.get = function(key, callback) {
             callback(new Error('ggg'), []);
           };
           var tmpLoadFromDB = Model._loadFromDB;
@@ -388,13 +388,13 @@
           };
           Model.findByIds([1, 2, 3, 4], function(err) {
             should.exist(err);
-            ModelFactory.cache.get = tmp;
+            Model.cache.get = tmp;
             Model._loadFromDB = tmpLoadFromDB;
             done();
           });
         });
         it('should be ok when rows[keys[i]] exists', function(done) {
-          var tmp = ModelFactory.cache.get;
+          var tmp = Model.cache.get;
           var rows = {};
           [1, 2, 3, 4].forEach(function(id) {
             rows[Model._cacheKey(id)] = {
@@ -402,12 +402,12 @@
               non: 1
             };
           });
-          ModelFactory.cache.get = function(key, callback) {
+          Model.cache.get = function(key, callback) {
             callback(new Error('ggg'), rows);
           };
           Model.findByIds([1, 2, 3, 4], function(err) {
             should.not. exist(err);
-            ModelFactory.cache.get = tmp;
+            Model.cache.get = tmp;
             done();
           }, {
             json: true,

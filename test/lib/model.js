@@ -7,10 +7,8 @@ var model = require('../../lib/model').init({
   db: db,
   cache: cache
 });
-var Criteria = require('../../lib/criteria');
-Criteria.init({ db: db, cache: cache });
 
-describe('lib/model.js', function() {
+describe('lib/model.js', function () {
   var Model = model({
     tableName: 'test',
     fields: [{
