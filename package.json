@@ -1,6 +1,6 @@
 {
   "name": "discover",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "ORM",
   "main": "index.js",
   "repository": {
@@ -25,7 +25,7 @@
     "mysql": "^2.9.0",
     "underscore": "^1.8.3"
   },
-  "author": "Zola, PenaFong",
+  "author": "Zola, PenaFong, ran <abbshr@outlook.com>",
   "license": "ISC",
   "devDependencies": {
     "gulp": "^3.9.0",
