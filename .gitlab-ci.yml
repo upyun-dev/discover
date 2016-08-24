@@ -1,5 +1,9 @@
 before_script:
   - npm install
+  - "cp test/conf/config{.sample,}.js"
+
+variables:
+  NODE_ENV: 'test'
 
 stages:
   - lint
