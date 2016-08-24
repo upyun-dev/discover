@@ -1,0 +1,20 @@
+before_script:
+  - npm install
+
+stages:
+  - lint
+  - test
+
+lint_job:
+  stage: lint
+  script:
+    - npm run lint
+  tags:
+    - 'discover'
+
+test_job:
+  stage: test
+  script:
+    - npm run test-cov
+  tags:
+    - 'discover'
