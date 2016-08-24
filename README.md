@@ -1,3 +1,7 @@
+[![build status](http://gitlab.widget-inc.com/upyun-dev/discover/badges/develop/build.svg)](http://gitlab.widget-inc.com/upyun-dev/discover/commits/develop)
+
+[![build status](http://gitlab.widget-inc.com/upyun-dev/discover/badges/develop/build.svg)](http://gitlab.widget-inc.com/upyun-dev/discover/commits/develop)
+
 ### Dependencies
 
 + mysqld
