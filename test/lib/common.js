@@ -27,10 +27,12 @@
     fields: [
       {
         name: 'non_uniq'
-      }, {
+      },
+      {
         unique: true,
         name: 'uniq'
-      }, {
+      },
+      {
         pk: true,
         name: 'id'
       }
@@ -59,7 +61,6 @@
         });
 
         it('should return an array contains the method with specified prefix', function(done) {
-          var ret;
           Model.prototype.validateFoo = function(callback) {
             return callback(null);
           };
@@ -140,7 +141,8 @@
             should.not.exists(err);
             ret[0].attributes.non_uniq.should.equal(1);
             return done();
-          }, {
+          },
+          {
             non_uniq: 1
           });
         });
@@ -196,7 +198,8 @@
             fields: [
               {
                 name: 'non_uniq'
-              }, {
+              },
+              {
                 unique: true,
                 name: 'uniq'
               }
@@ -242,7 +245,8 @@
             fields: [
               {
                 name: 'non_uniq'
-              }, {
+              },
+              {
                 unique: true,
                 name: 'uniq'
               }
@@ -409,7 +413,8 @@
             should.not. exist(err);
             Model.cache.get = tmp;
             done();
-          }, {
+          },
+          {
             json: true,
             secure: {}
           });
@@ -475,10 +480,12 @@
             fields: [
               {
                 name: 'non_uniq'
-              }, {
+              },
+              {
                 unique: true,
                 name: 'uniq'
-              }, {
+              },
+              {
                 name: 'default',
                 'default': 9
               }
@@ -488,7 +495,8 @@
           return should.ok(DefaultModel._newInstance({
             uniq: 2,
             non: 1
-          }, {}));
+          },
+          {}));
         });
       });
       describe('.update', function() {
@@ -588,7 +596,8 @@
                 name: 'bin',
                 type: 'binary',
                 pk: true
-              }, {
+              },
+              {
                 unique: true,
                 name: 'uniq'
               }
@@ -653,7 +662,8 @@
             attributes: {
               uniq: 5
             }
-          }, {
+          },
+          {
             attributes: {
               non_uniq: 4
             }

@@ -8,7 +8,7 @@ var model = require('../../lib/model').init({
   cache: cache
 });
 
-describe('lib/model.js', function () {
+describe('lib/model.js', function() {
   var Model = model({
     tableName: 'test',
     fields: [{
@@ -25,13 +25,15 @@ describe('lib/model.js', function () {
       fields: [{
         unique: true,
         name: 'test'
-      }, {
-          unique: true,
-          name: 'test_test'
-        }, {
-          unique: true,
-          name: 'id'
-        }],
+      },
+      {
+        unique: true,
+        name: 'test_test'
+      },
+      {
+        unique: true,
+        name: 'id'
+      }],
       indices: []
     });
     it('should be success', function() {
@@ -119,18 +121,20 @@ describe('lib/model.js', function () {
         fields: [{
           unique: true,
           name: 'test'
-        }, {
-            index: true,
-            name: 'test_test'
-          }, {
-            unique: true,
-            name: 'id'
-          }],
+        },
+        {
+          index: true,
+          name: 'test_test'
+        },
+        {
+          unique: true,
+          name: 'id'
+        }],
         indices: []
       });
       Model.prototype._initialize = Model.prototype.initialize;
       Model.prototype.initialize = function() {};
-      Model.findByTestTest('', function () {
+      Model.findByTestTest('', function() {
         var m = new Model();
         m.should.be.ok();
         Model.prototype.initialize = Model.prototype._initialize;

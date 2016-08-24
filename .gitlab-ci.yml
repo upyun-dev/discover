@@ -1,0 +1,25 @@
+before_script:
+  - npm install
+  - "cp test/conf/config{.sample,}.js"
+  # - "mysql -uroot <<< 'create database discover1;create database discover2;'"
+
+variables:
+  NODE_ENV: 'test'
+
+stages:
+  - lint
+  - test
+
+lint_job:
+  stage: lint
+  script:
+    - npm run lint
+  tags:
+    - 'discover'
+
+test_job:
+  stage: test
+  script:
+    - npm run test-cov
+  tags:
+    - 'discover'

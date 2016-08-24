@@ -27,13 +27,16 @@ describe('lib/table.js', function() {
     fields: [{
       unique: true,
       name: 'test'
-    }, {
+    },
+    {
       unique: true,
       name: 'test_test'
-    }, {
+    },
+    {
       unique: true,
       name: 'id'
-    }, {
+    },
+    {
       name: 'name'
     }],
     indices: []

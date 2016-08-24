@@ -17,10 +17,12 @@ var Model = ModelFactory({
   fields: [
     {
       name: 'non_uniq'
-    }, {
+    },
+    {
       unique: true,
       name: 'uniq'
-    }, {
+    },
+    {
       pk: true,
       name: 'id'
     }
