@@ -127,7 +127,11 @@ describe('lib/table.js', function() {
 
   describe('insert', function() {
     var model = new Model();
+    it('should be successful when callback isnt provide', function() {
+      table.insert(model);
+    });
     it('should be successful', function(done) {
+      model.test = 5;
       table.insert(model, function(err, model) {
         should.not.exist(err);
         should.exist(model);
