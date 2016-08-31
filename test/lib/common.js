@@ -178,6 +178,22 @@
         });
       });
       describe('.find', function() {
+        context('execute multi-conditions on one field', function() {
+          it('should be ok and return the matched result', function(done) {
+            Model.find({
+              uniq: 2,
+              nonUniq: [
+                { op: 'gt', value: 3 },
+                { op: 'lt', value: 6 }
+              ]
+            }, function(err, result) {
+              should.not.exists(err);
+              result.length.should.equal(0);
+              return done();
+            });
+          });          
+        });
+
         it('should be ok and return the matched result', function(done) {
           return Model.find({
             uniq: 2,
