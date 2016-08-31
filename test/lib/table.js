@@ -127,8 +127,9 @@ describe('lib/table.js', function() {
 
   describe('insert', function() {
     var model = new Model();
-    it('should be successful when callback isnt provide', function() {
+    it('should be successful when callback isnt provide', function(done) {
       table.insert(model);
+      setImmediate(done);
     });
     it('should be successful', function(done) {
       model.test = 5;

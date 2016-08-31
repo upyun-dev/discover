@@ -148,6 +148,20 @@
         });
       });
       describe('.count', function() {
+        context('execute multi-conditions on one field', function() {
+          it('should return the count of the matched items', function(done) {
+            Model.count({
+              nonUniq: [
+                { op: 'gt', value: 10 },
+                { op: 'lt', value: 20 }
+              ]
+            }, function(err, count) {
+              should.not.exists(err);
+              count.should.equal(0);
+              done();
+            });
+          });
+        });
         it('should return the count of the matched items', function(done) {
           return Model.count({
             nonUniq: {
