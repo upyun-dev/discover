@@ -23,6 +23,7 @@
     "memcached": "^2.2.0",
     "moment": "^2.10.3",
     "mysql": "^2.9.0",
+    "ooq": "git+ssh://gitlab@gitlab.widget-inc.com:65422/huanran.sun/qengine.git",
     "underscore": "^1.8.3"
   },
   "author": "Zola, PenaFong, ran <abbshr@outlook.com>",
