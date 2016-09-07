@@ -205,7 +205,7 @@
               result.length.should.equal(0);
               return done();
             });
-          });          
+          });
         });
 
         it('should be ok and return the matched result', function(done) {
