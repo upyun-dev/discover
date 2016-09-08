@@ -17,11 +17,6 @@
     cache: cache
   });
 
-  // require('../../lib/criteria').init({
-  //   db: db,
-  //   cache: cache
-  // });
-
   Model = ModelFactory({
     tableName: 'common_test',
     fields: [
@@ -151,20 +146,22 @@
         context('execute multi-conditions on one field', function() {
           it('should return the count of the matched items', function(done) {
             Model.count({
-              nonUniq: [
-                { op: 'gt', value: 10 },
-                { op: 'lt', value: 20 }
-              ]
+              non_uniq: {
+                $and: [
+                  { op: 'gt', value: 0 },
+                  { op: 'lt', value: 2 }
+                ]
+              }
             }, function(err, count) {
               should.not.exists(err);
-              count.should.equal(0);
+              count.should.equal(1);
               done();
             });
           });
         });
         it('should return the count of the matched items', function(done) {
           return Model.count({
-            nonUniq: {
+            non_uniq: {
               op: 'gt',
               value: 0
             }
@@ -183,7 +180,7 @@
         });
         return it('should return the count of the matched items when opts contains an query object', function(done) {
           return Model.count({
-            nonUniq: 1
+            non_uniq: 1
           }, function(err, count) {
             should.not.exists(err);
             count.should.equal(1);
@@ -196,10 +193,18 @@
           it('should be ok and return the matched result', function(done) {
             Model.find({
               uniq: 2,
-              nonUniq: [
-                { op: 'gt', value: 3 },
-                { op: 'lt', value: 6 }
-              ]
+              non_uniq: {
+                $and: [
+                  { op: 'gt', value: 3 },
+                  { op: 'lt', value: 6 }
+                ]
+              },
+              $not: {
+                id: {
+                  op: 'eq',
+                  value: 4
+                }
+              }
             }, function(err, result) {
               should.not.exists(err);
               result.length.should.equal(0);
@@ -211,7 +216,7 @@
         it('should be ok and return the matched result', function(done) {
           return Model.find({
             uniq: 2,
-            nonUniq: {
+            non_uniq: {
               op: 'lt',
               value: 3
             }
@@ -252,14 +257,23 @@
       });
       describe('.findOne', function() {
         it('should be ok and return the certain one item that matches the conditions', function(done) {
-          return Model.findOne({
+          Model.findOne({
             uniq: 2,
             non_uniq: 1
-          }, function(err, result) {
+          }, {}, function(err, result) {
             should.not.exists(err);
             result.attributes.uniq.should.equal(2);
             result.attributes.non_uniq.should.equal(1);
-            return done();
+            
+            Model.findOne({
+              uniq: 2,
+              non_uniq: 1
+            }, function(err, result) {
+              should.not.exists(err);
+              result.attributes.uniq.should.equal(2);
+              result.attributes.non_uniq.should.equal(1);
+              done();
+            });
           });
         });
         it('should be ok when pass an null opts', function(done) {
@@ -304,10 +318,17 @@
         return it('should return the matched results with its count', function(done) {
           return Model.findWithCount({
             uniq: 2
-          }, function(err, ret) {
+          }, {}, function(err, ret) {
             should.not.exists(err);
             ret.should.have.properties(['rows', 'total']);
-            return done();
+            
+            Model.findWithCount({
+              uniq: 2
+            }, function(err, ret) {
+              should.not.exists(err);
+              ret.should.have.properties(['rows', 'total']);
+              done();
+            });
           });
         });
       });

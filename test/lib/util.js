@@ -1,4 +1,5 @@
 var util = require('../../lib/util');
+require('should');
 
 describe('util.js', function() {
   describe('isEntity', function() {

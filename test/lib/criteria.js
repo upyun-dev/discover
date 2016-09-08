@@ -322,6 +322,16 @@ describe('criteria.js', function() {
       Criteria.or(Model).constructor.should.deepEqual(Criteria.Filter.OR);
     });
   });
+  describe('Criteria.not', function() {
+    it('should return the new instance of Criteria.Filter.NOT', function() {
+      Criteria.not(Model).constructor.should.deepEqual(Criteria.Filter.NOT);
+    });
+  });
+  describe('Criteria.xor', function() {
+    it('should return the new instance of Criteria.Filter.XOR', function() {
+      Criteria.xor(Model).constructor.should.deepEqual(Criteria.Filter.XOR);
+    });
+  });
   describe('Criteria.like', function() {
     it('should return the new instance of Criteria.Filter', function() {
       Criteria.like(Model).constructor.should.deepEqual(Criteria.Filter);
