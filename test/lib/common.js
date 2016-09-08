@@ -264,7 +264,7 @@
             should.not.exists(err);
             result.attributes.uniq.should.equal(2);
             result.attributes.non_uniq.should.equal(1);
-            
+
             Model.findOne({
               uniq: 2,
               non_uniq: 1
@@ -321,7 +321,7 @@
           }, {}, function(err, ret) {
             should.not.exists(err);
             ret.should.have.properties(['rows', 'total']);
-            
+
             Model.findWithCount({
               uniq: 2
             }, function(err, ret) {
