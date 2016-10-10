@@ -1,7 +1,6 @@
 before_script:
   - npm install
   - "cp test/conf/config{.sample,}.js"
-  - echo $asd
   # - "mysql -uroot <<< 'create database discover1;create database discover2;'"
 
 variables:
