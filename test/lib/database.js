@@ -102,8 +102,8 @@ describe('lib/database.js', function() {
         var pool = database.getPool(databaseCfg);
         var pools = database.pools;
         var tmp = pools[databaseCfg.database].acquire;
-        pools[databaseCfg.database].acquire = function(callback) {
-          callback(new Error());
+        pools[databaseCfg.database].acquire = function() {
+          return Promise.reject(new Error());
         };
         pool.query('', function(err) {
           should.exist(err);
@@ -113,12 +113,18 @@ describe('lib/database.js', function() {
       });
     });
 
-    describe('connectpool.destory', function() {
-      it('should be ok', function() {
-        var pools = database.pools;
-        pools[databaseCfg.database].destroy({
-          end: function() {}
+    describe('connectpool.destroy', function() {
+      it('should be ok', function(done) {
+        let pools = database.pools;
+        let pool = pools[databaseCfg.database];
+
+        pool.acquire().then(function(db) {
+          pool.destroy(db);
+        }).then(function(r) {
+          should.not.exist(r);
+          done();
         });
+
       });
     });
   });
