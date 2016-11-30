@@ -1,17 +1,18 @@
 module.exports = {
   cache: {
-    servers: '127.0.0.1:11211',
+    servers: 'memcached:11211',
     options: {}
   },
   database: {
     poolSize: 5,
-    host: '127.0.0.1',
+    host: 'mysql',
     user: 'root',
     password: '',
     database: 'discover1'
   },
   // for bad configurations test
   dupDatabase: {
+    host: 'mysql',
     poolSize: 0,
     user: 'root',
     password: '',

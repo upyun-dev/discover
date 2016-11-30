@@ -1,5 +1,3 @@
-"use stricts";
-
 var should = require('should');
 var database = require('../../lib/database');
 var config = require('../conf/config');

@@ -12,22 +12,23 @@ stages:
   - lint
   - test
 
-# lint_job:
-#   stage: lint
-#   script:
-#     - npm run lint
-#   tags:
-#     - offline-test
+lint_job:
+  stage: lint
+  script:
+    - npm run lint
+  tags:
+    - offline-test
 
 test_job:
   services:
-    - mysql:5.7.16
-    - memcached:1.4.33
+    - mysql
+    - memcached
   variables:
-    MYSQL_ALLOW_EMPTY_PASSWORD: ok
+    MYSQL_ROOT_PASSWORD: ''
+    MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
   stage: test
   script:
-    - test/bin/init-database.sh
+    - bin/init-database.js
     - npm run test-cov
   tags:
     - offline-test
