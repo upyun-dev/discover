@@ -1,25 +1,33 @@
+image: node:6.9.1
 before_script:
   - npm install
-  - "cp test/conf/config{.sample,}.js"
-  # - "mysql -uroot <<< 'create database discover1;create database discover2;'"
+  - cp test/conf/config{.sample,}.js
+  - npm config set registry "https://registry.npm.taobao.org"
+  - npm config set @upyun:registry "http://r.widget-inc.com"
 
 variables:
-  NODE_ENV: 'test'
+  NODE_ENV: test
 
 stages:
   - lint
   - test
 
-lint_job:
-  stage: lint
-  script:
-    - npm run lint
-  tags:
-    - 'discover'
+# lint_job:
+#   stage: lint
+#   script:
+#     - npm run lint
+#   tags:
+#     - offline-test
 
 test_job:
+  services:
+    - mysql:5.7.16
+    - memcached:1.4.33
+  variables:
+    MYSQL_ALLOW_EMPTY_PASSWORD: ok
   stage: test
   script:
+    - test/bin/init-database.sh
     - npm run test-cov
   tags:
-    - 'discover'
+    - offline-test

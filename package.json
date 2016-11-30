@@ -7,6 +7,10 @@
     "type": "git",
     "url": "ssh://gitlab@gitlab.widget-inc.com:65422/upyun-dns/discover.git"
   },
+  "engines": {
+    "node": ">=6.0.0",
+    "npm": ">=3.8.6"
+  },
   "scripts": {
     "lint": "gulp",
     "test": "NODE_ENV=test node_modules/mocha/bin/_mocha",
