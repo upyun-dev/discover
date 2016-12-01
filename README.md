@@ -1,10 +1,39 @@
 [![build status](http://gitlab.widget-inc.com/upyun-dev/discover/badges/develop/build.svg)](http://gitlab.widget-inc.com/upyun-dev/discover/commits/develop)
 
 [![Dependency Status](https://gemnasium.com/badges/882de3f393ed94e9a2bf2fe374e04ff7.svg)](https://gemnasium.com/1cbdb8e638a7b76b88b6450dd36fcbc6)
-### Dependencies
+### Dependencies Services
 
 + mysqld
 + memcached
+
+### Getting start
+
+```coffee
+{ Model, Criteria, getPool } = require '@upyun/discover'
+
+# Model: function, 模型工厂
+# Criteria: function, 低层次 SQL 逻辑操作封装
+# getPool: function, mysql driver 接口
+
+# 创建数据模型
+Cat = Model options, params
+Dog = Model options, params
+
+cat_a = new Cat()
+dog_a = new Dog()
+```
+
+## Internal
+
+WIP
+
+### ooq
+
+WIP
+
+## other mechanism
+
+WIP
 
 ### Hooks
 Discover now supports hook mechanism.
