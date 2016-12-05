@@ -12,14 +12,14 @@ stages:
   - lint
   - test
 
-lint_job:
+lint:
   stage: lint
   script:
     - npm run lint
   tags:
     - offline-test
 
-test_job:
+test:
   services:
     - mysql
     - memcached
