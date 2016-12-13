@@ -8,6 +8,11 @@ before_script:
 variables:
   NODE_ENV: test
 
+cache:
+  key: $CI_BUILD_REF
+  paths:
+    - node_modules
+
 stages:
   - lint
   - test
