@@ -17,11 +17,11 @@
     "test-cov": "NODE_ENV=test istanbul cover node_modules/mocha/bin/_mocha"
   },
   "dependencies": {
-    "@upyun/ooq": "^0.0.2",
+    "ooq": "^0.0.2",
     "async": "^2.0.1",
     "bignumber.js": "^4.0.0",
     "debug": "^2.2.0",
-    "eventemitter2": "^2.0.1",
+    "eventemitter2": "^3.0.0",
     "generic-pool": "^3.1.4",
     "lodash": "^4.15.0",
     "memcached": "^2.2.0",
