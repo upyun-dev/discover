@@ -509,7 +509,7 @@
           return Model._afterHooks.find.length.should.equal(0);
         });
         return it('should be succeed when add a valid hook', function() {
-          Model.after('insert', function(done) {
+          Model.after('insert', function(model, done) {
             return done(null);
           });
           return should.exists(Model._afterHooks.insert);

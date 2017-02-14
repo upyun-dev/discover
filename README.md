@@ -50,9 +50,26 @@ Model.before('insert', function(done) {
 });
 ```
 
-##### After Hook
+##### Three Different After Hooks
 ```js
-Model.after('delete', function(done) {
+// insert
+Model.after('insert', function(new_model, done) {
+  // `this` => the Model instance
+  console.info('after delete operation');
+  // must be called when the current task done !
+  done(err);
+});
+
+// update
+Model.after('update', function(old_model, new_model, done) {
+  // `this` => the Model instance
+  console.info('after delete operation');
+  // must be called when the current task done !
+  done(err);
+});
+
+// delete
+Model.after('delete', function(old_model, done) {
   // `this` => the Model instance
   console.info('after delete operation');
   // must be called when the current task done !
