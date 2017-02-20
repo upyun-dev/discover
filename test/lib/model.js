@@ -130,7 +130,7 @@ describe('lib/model.js', function() {
 
     it('the return of the `toJSON` method on the model should not contains the `"secure"`d field', function() {
       var newModel = new Model();
-      should.not.exist(newModel.toJSON()['need_4_secure']);
+      should.not.exist(newModel.toJSON().need_4_secure);
     });
   });
 
