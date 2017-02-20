@@ -106,6 +106,34 @@ describe('lib/model.js', function() {
     });
   });
 
+  context('when defined `secure` in fields', function() {
+    var Model = model({
+      tableName: 'test-a',
+      fields: [{
+        unique: true,
+        name: 'test'
+      },
+      {
+        unique: true,
+        name: 'test_test'
+      },
+      {
+        unique: true,
+        name: 'id'
+      },
+      {
+        name: 'need_4_secure',
+        secure: true
+      }],
+      indices: []
+    });
+
+    it('the return of the `toJSON` method on the model should not contains the `"secure"`d field', function() {
+      var newModel = new Model();
+      should.not.exist(newModel.toJSON()['need_4_secure']);
+    });
+  });
+
   describe('instance', function() {
     it('should be success', function() {
       var CustomModel = Model;
