@@ -32,6 +32,15 @@
 
 * Model 创建模型时不再修改传入的参数
 * 支持同一进程内多数据库实例
-* 添加注释和文件描述,  重构 criteria
+* 添加注释和文件描述, 重构 criteria
 * 修复使用 domain 做 model fields 导致测试结果未知异常的问题
 * 弃用 eventemitter, 改用 eventemitter 2
+
+0.3.5 / 2017-02-22
+==================
+
+* Model 创建模型时 fields 中的每个字段支持 `secure` 开关.
+* `find()` 函数不再要求 model 中必须包含 id 列.
+* after hooks 回调函数的头几个参数会传入旧的和新的 model.
+* `insert`, `update`, `delete` 操作回调函数会传递执行当前操作的 model 给第一个参数.
+* 删除 lodash 依赖
