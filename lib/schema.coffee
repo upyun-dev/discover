@@ -1,7 +1,7 @@
 Table = require "./table"
 field_types = require "./type"
-{ class_methods, instance_methods } = require "./model"
-{ EventEmitter2: EventEmitter } = require "eventemitter2"
+Model = require "./model"
+Query = require "./query"
 
 setup = ({ database, cache }) -> (params) -> create_model database, cache, params
 
@@ -24,7 +24,8 @@ create_model = (database, cache, params) ->
   delete params.indices
   delete params.tablename
 
-  class Model extends EventEmitter
+  # 每次返回一个新的混入模型
+  class MixedModel extends Model
     @$table: table
     @$constructor: Schema
     @_beforehooks: {}
@@ -32,10 +33,15 @@ create_model = (database, cache, params) ->
 
     $constructor: @
 
-    Object.assign @, class_methods
-    Object.assign @::, instance_methods
+    # mixin 静态方法
+    Object.assign @, Model
     Object.assign @::, params
 
+    @$query: new Query @
+    @$database: database
+    @$cache: cache
+
+    # 根据索引生成静态查询方法
     for { column, unique } in indices
       suffix = column.replace /\b[a-z]/g, (match) -> match.toLowerCase()
       method_name = "find_by_#{suffix}"
@@ -45,21 +51,10 @@ create_model = (database, cache, params) ->
         args.unshift column
         @[if unique? then "find_by_unique_key" else "find_by_index"] args...
 
+    # 定义 model attrs 的 getter/setter 属性
     for { column } in _fields
       Object.defineProperty @::, column, 
         get: -> @get column
         set: (val) -> @set column, val
-
-    constructor: (attributes = {}) ->
-      super()
-      @$model = Model
-      attributes = attributes.attributes if attributes.$model?
-      { $table: { defaults } } = @$model
-
-      attributes[k] = v for k, v of defaults when k not of attributes
-      @attributes = attributes
-      @_oldstates = @to_json yes
-      @_changed = no
-      @_previous_attributes = null
 
 module.exports = setup

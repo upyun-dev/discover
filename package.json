@@ -17,15 +17,16 @@
     "test-cov": "NODE_ENV=test istanbul cover node_modules/mocha/bin/_mocha"
   },
   "dependencies": {
-    "ooq": "^0.0.2",
     "async": "^2.0.1",
     "bignumber.js": "^4.0.0",
+    "coffee-script": "^1.12.5",
     "debug": "^2.2.0",
     "eventemitter2": "^4.1.0",
     "generic-pool": "^3.1.4",
     "memcached": "^2.2.0",
     "moment": "^2.10.3",
     "mysql": "^2.9.0",
+    "ooq": "^0.0.2",
     "underscore": "^1.8.3"
   },
   "author": "Zola, PenaFong, ran <abbshr@outlook.com>",
