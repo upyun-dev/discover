@@ -1,7 +1,5 @@
 { EventEmitter2: EventEmitter } = require "eventemitter2"
 { createHash } = require "crypto"
-# Query = require "./query"
-# ooq = require("./ooq") query
 
 class Model extends EventEmitter
   constructor: (attributes = {}) ->
@@ -17,7 +15,7 @@ class Model extends EventEmitter
     @_previous_attributes = null
 
   to_json: (include_secure) ->
-    { $table: { internal_fields } } = @$model
+    { $table: { fields } } = @$model
     json_object = Object.assign {}, @attributes
     delete json_object[name] for name, { secure } of fields when secure unless include_secure
     json_object
@@ -122,10 +120,52 @@ class Model extends EventEmitter
     .execute options, callback
 
   @find: (conditions, options, callback) ->
+    if typeof options is "function"
+      callback = options
+      options = {}
+    
+    { orderby, json, limit, page } = options = Object.assign
+      orderby: if @$table.fields.id? then id: "desc"
+      json: no
+      limit: 20
+      page: 1
+    , options
+    
+    offset = (page - 1) * limit
+    @$query.select @
+    .where conditions
+    .orderby orderby
+    .limit limit, offset
+    .execute { json }, callback
 
   @findone:
-  @find_by_id:
-  @find_by_ids:
+  @find_by_id: (id, options, callback) ->
+    { pks, database } = @$table
+    # sql = @sql_templates.find
+    args = if Array.isArray id and pks.length is id.length
+      id
+    else if typeof id is "object"
+      id[column] for { column } in pks when column of id
+    else if pks.length is 1
+      [id]
+
+    unless args?.length is pks.length
+      return Promise.reject new Error "Invalid id arguments"
+
+    args = for { type }, idx in pks
+      if type isnt "hash" then args[idx] else field.serialize args[idx]
+
+    # new Promise (resolve, reject) =>
+    #   @database.query sql, args, (err, rows) -> if err? then reject err else resolve rows[0]
+
+    conditions = {}
+    conditions[column] = args[idx] for { column }, idx in pks
+
+    # @$query.select @
+    # .where conditions
+    # .execute options, callback
+    @find conditions, options, callback
+
   @find_by_index:
   @find_with_count:
   @find_by_unique_key:

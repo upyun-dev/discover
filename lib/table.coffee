@@ -5,12 +5,11 @@
 # - update
 # - delete
 
-# database = require "./database"
 ooq = require "./ooq"
 
 class Table # model 的 Write 操作: 建表, 添加, 更新, 删除.
-  constructor: ({ @database, @name, @fields } = {}) ->
-    @internal_fields = {}
+  constructor: ({ @database, @name, fields: @internal_fields } = {}) ->
+    @fields = {}
     @pks = []
     @columns = []
     @auto = []
@@ -24,11 +23,11 @@ class Table # model 的 Write 操作: 建表, 添加, 更新, 删除.
     # @ensure_table()
 
   build: ->
-    for field in @fields
+    for field in @internal_fields
       field.column = field.name unless field.column?
 
       { column, pk, auto, default: default_value } = field
-      @internal_fields[column] = field
+      @fields[column] = field
       @columns.push column
 
       (if pk? then @pks else @non_pks).push field
@@ -71,8 +70,7 @@ class Table # model 的 Write 操作: 建表, 添加, 更新, 删除.
           reject err, info
         else
           model.set column, info.insertId, silent: yes for { column } in @auto
-          model.clear()
-          resolve model
+          resolve model.reset()
 
   # promisify
   delete: (model) ->
@@ -80,12 +78,7 @@ class Table # model 的 Write 操作: 建表, 添加, 更新, 删除.
     args = (field.serialize model.get column for { column } in @pks)
 
     new Promise (resolve, reject) =>
-      @database.query sql, args, (err, info) =>
-        if err?
-          reject err, info
-        else
-          model.clear()
-          resolve true
+      @database.query sql, args, (err, info) => if err? then reject err, info else resolve model.reset()
 
   # promisify
   update: (model) ->
@@ -101,8 +94,7 @@ class Table # model 的 Write 操作: 建表, 添加, 更新, 删除.
     args.push field.serialize model.get field.column for field in @pks
 
     new Promise (resolve, reject) =>
-      @database.query sql, args, (err, info) =>
-        if err? then reject err, info else resolve true
+      @database.query sql, args, (err, info) => if err? then reject err, info else resolve true
 
   update_where: (condition, attrs) ->
     return Promise.resolve false unless attrs and Object.keys(attrs).length is 0
@@ -113,22 +105,15 @@ class Table # model 的 Write 操作: 建表, 添加, 更新, 删除.
 
     sql = @sql_update_where_template args, condition
     args = Object.values args
-    # args.push field.serialize model.get field.column for field in @pks
 
     new Promise (resolve, reject) =>
       @database.query sql, args, (err, info) => if err? then reject err, info else resolve true
 
   delete_where: (condition) ->
     sql = @sql_delete_where_template condition
-    # args = (field.serialize model.get column for { column } in @pks)
 
     new Promise (resolve, reject) =>
-      @database.query sql, [], (err, info) =>
-        if err?
-          reject err, info
-        else
-          model.reset()
-          resolve true
+      @database.query sql, [], (err, info) => if err? then reject err, info else resolve model.reset()
   # setup_sql_find_template: ->
   #   cols = ("`#{column}`" for { column } in @fields).join ","
   #   condition = ("`#{column}` = ?" for { column } in @pks).join " AND "
@@ -157,14 +142,14 @@ class Table # model 的 Write 操作: 建表, 添加, 更新, 删除.
     @sql_update_where_template args, condition
   
   sql_update_where_template: (args, condition) ->
-    update_set = ("`#{@internal_fields[k].column}` = ?" for k of args).join ","
+    update_set = ("`#{@fields[k].column}` = ?" for k of args).join ","
     sql_template = """
       UPDATE `#{@name}` SET #{update_set} WHERE #{condition}
     """
 
   # TODO
   ensure_table: ->
-    cols = for { column, type, auto } in @fields
+    cols = for { column, type, auto } in @internal_fields
       col = "`#{column}` #{type}"
       col = "#{col} AUTO_INCREMENT" if auto?
     .join ","
