@@ -1,8 +1,0 @@
-{
-  "mocha": true,
-  "noarg": true,
-  "node": true,
-  "undef": true,
-  "unused": "vars",
-  "esnext": true
-}

@@ -9,16 +9,19 @@ class Cache
     .on "failure", (details) -> console.error details
     .on "reconnectiong", (details) -> console.info details
 
-  get: (key, callback) ->
-    return callback null, [] unless @inst?
-    @inst.get key, callback
+  get: (key) ->
+    new Promise (resolve, reject) ->
+      if @inst? then @inst.get key, (err, data) -> if err? then reject err else resolve data
+      else resolve []
 
-  del: (key, callback) ->
-    return callback null, null unless @inst?
-    @inst.del key, callback
+  del: (key) ->
+    new Promise (resolve, reject) ->
+      if @inst? then @inst.del key, (err) -> if err? then reject err else resolve null
+      else resolve null
 
-  set: (key, value, expire, callback) ->
-    return callback null, null unless @inst?
-    @inst.set key, value, expire, callback
+  set: (key, value, expire) ->
+    new Promise (resolve, reject) ->
+      if @inst? then @inst.set key, value, expire, (err) -> if err? then reject err else resolve null
+      else resolve null
 
 module.exports = Cache

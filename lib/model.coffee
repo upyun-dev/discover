@@ -1,47 +1,58 @@
 { EventEmitter2: EventEmitter } = require "eventemitter2"
 { createHash } = require "crypto"
+lo = require "lodash"
 
 class Model extends EventEmitter
   constructor: (attributes = {}) ->
     super()
-    @$model = Model
-    attributes = attributes.attributes ? attributes
-    { $table: { defaults } } = @$model
+    @$schema = @constructor
+    # attributes = attributes.attributes ? attributes
+    { $table: { defaults } } = @$schema
 
-    attributes[k] = v for k, v of defaults when k not of attributes
+    # 填充默认值
+    attributes[column] = field for column, field of defaults when column not of attributes
     @attributes = attributes
+
+    # 记录改变前的状态, 此为 attrs 初始值
     @_oldstates = @to_json yes
     @_changed = no
     @_previous_attributes = null
 
   to_json: (include_secure) ->
-    { $table: { fields } } = @$model
-    json_object = Object.assign {}, @attributes
+    { $table: { fields } } = @$schema
+    json_object = lo.cloneDeep @attributes
     delete json_object[name] for name, { secure } of fields when secure unless include_secure
     json_object
 
   has: (attr) -> attr of @attributes
   get: (attr) -> @attributes[attr]
-  set: (args...) ->
-    return @ if args.length is 0
 
-    attrs = {}
-    options = {}
-
+  _resolve_args: (args) ->
     switch
       when typeof args[0] is "object"
-        attrs = args[0].attributes ? args[0]
-        options = args[1] ? {}
+        [
+          args[0].attributes ? args[0]
+          args[1] ? {}
+        ]
       when typeof args[0] is "string" and args.length > 1
-        attrs[args[0]] = args[1]
-        options = args[2] ? {}
+        [
+          "#{args[0]}": args[1]
+          args[2] ? {}
+        ]
+      else 
+        [{}, {}]
 
-    return @ if Object.keys(attrs).length is 0
+  set: (args...) ->
+    return @ if lo.isEmpty args
+
+    [attrs, options] = @_resolve_args args
+
+    return @ if lo.isEmpty attrs
 
     current_attrs = @attributes
 
-    # validation
-    return no unless options.silent or not @validate or validate attrs, options
+    # 检查修改是否合法
+    return no unless options.silent or not @validate or @perform_validate attrs, options
 
     changing = @_changing
     @_changing = yes
@@ -62,7 +73,7 @@ class Model extends EventEmitter
       @_changed = yes
 
   # If a specific `error` callback has been passed, call that instead of firing the general `'error'` event.
-  validate: (attrs, options) ->
+  perform_validate: (attrs, options) ->
     error = @validate attrs
     return yes unless error
 
@@ -102,91 +113,8 @@ class Model extends EventEmitter
     else if attr? then @_previous_attributes[attr]
     else Object.assign {}, @_previous_attributes
 
-  insert: (callback) -> @$model.insert @, callback
-  update: (callback) -> @$model.update @, callback
-  delete: (callback) -> @$model.delete @, callback
-
-  @all: (callback, options) ->
-    @$query.select @
-    .execute options, callback
-
-  @count: (conditions, options, callback) ->
-    if typeof options is "function"
-      callback = options
-      options = {}
-
-    @$query.count @
-    .where if conditions? then ooq conditions
-    .execute options, callback
-
-  @find: (conditions, options, callback) ->
-    if typeof options is "function"
-      callback = options
-      options = {}
-    
-    { orderby, json, limit, page } = options = Object.assign
-      orderby: if @$table.fields.id? then id: "desc"
-      json: no
-      limit: 20
-      page: 1
-    , options
-    
-    offset = (page - 1) * limit
-    @$query.select @
-    .where conditions
-    .orderby orderby
-    .limit limit, offset
-    .execute { json }, callback
-
-  @findone:
-  @find_by_id: (id, options, callback) ->
-    { pks, database } = @$table
-    # sql = @sql_templates.find
-    args = if Array.isArray id and pks.length is id.length
-      id
-    else if typeof id is "object"
-      id[column] for { column } in pks when column of id
-    else if pks.length is 1
-      [id]
-
-    unless args?.length is pks.length
-      return Promise.reject new Error "Invalid id arguments"
-
-    args = for { type }, idx in pks
-      if type isnt "hash" then args[idx] else field.serialize args[idx]
-
-    # new Promise (resolve, reject) =>
-    #   @database.query sql, args, (err, rows) -> if err? then reject err else resolve rows[0]
-
-    conditions = {}
-    conditions[column] = args[idx] for { column }, idx in pks
-
-    # @$query.select @
-    # .where conditions
-    # .execute options, callback
-    @find conditions, options, callback
-
-  @find_by_index:
-  @find_with_count:
-  @find_by_unique_key:
-  @find_and_update: (conditions, options, modified, callback) ->
-    @$table.update_where @$query.where(conditions)._where
-
-  @find_and_delete: (conditions, options, callback) ->
-
-  @insert:
-  @update:
-  @delete:
-
-  @before:
-  @after:
-
-  @clean_cache: (val, callback) -> @cache.del cache_key(val), callback
-
-  @load:
-  @walk:
-  @is_valid:
-  @cache_key:
-  @new_instance:
+  insert: (callback) -> @$schema.insert @, callback
+  update: (callback) -> @$schema.update @, callback
+  delete: (callback) -> @$schema.delete @, callback
 
 module.exports = Model

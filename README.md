@@ -9,18 +9,45 @@
 ### Getting start
 
 ```coffee
-{ Model, Criteria, getPool } = require '@upyun/discover'
+Discover = require "@upyun/discover"
+discover = new Discover database_config, cache_config
 
-# Model: function, 模型工厂
-# Criteria: function, 低层次 SQL 逻辑操作封装
-# getPool: function, mysql driver 接口
+# 创建两个 Schema
+User = discover.create_schema tablename: "user", fields: [
+  { column: "id", type: "Raw", pk: yes, auto: yes, secure: yes }
+  { column: "name", type: "Raw" }
+  { column: "age", type: "Int" }
+]
 
-# 创建数据模型
-Cat = Model options, params
-Dog = Model options, params
+Comment = discover.create_schema tablename: "comment", fields: [
+  { column: "" }
+]
 
-cat_a = new Cat()
-dog_a = new Dog()
+# 根据 Schema 创建模型 Model
+user_a = new User id: "1", name: "ran", location: "HangZhou", age: 23
+comment_a = new Comment id: "1", from_user: "1", content: "hello world", date: new Date
+
+# 持久化模型数据到对应表的行
+user_a.insert (err) ->
+
+# 对已有模型更新字段
+user_a.name = "abbshr"
+user_a.update (err) ->
+
+# 删除已有模型
+user_a.delete (err) ->
+
+# 查询
+User.find_by_id
+User.find_one
+User.find_by_xxx
+...
+
+# 条件更新
+User.find_and_update condition, modified, [options], callback
+
+# 条件删除
+User.find_and_delete condition, [options], callback
 ```
 
 ## Internal

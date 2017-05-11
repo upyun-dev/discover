@@ -1,77 +1,209 @@
-ooq = require "./ooq"
+ooq = require "ooq"
+lo = require "lodash"
+operators_ffi = require "./operators"
 
-class Query # Model 的 Read only 操作, 用于构建复杂的 SQL 查询语句
-  constructor: (@schema) -> #{ @database, @cache, select, filter, orderby, limit }) ->
-    # @_select = select
-    # @_filter = filter
-    # @_orderby = orderby
-    # @_limit = limit
-    @qengine = ooq @
+class AGAIN extends Error
+  constructor: (message) ->
+    super message
+    @name = @constructor.name
+    # Error.captureStackTrace @, @constructor
+
+# new Query User
+
+# .select()
+# .select().where(condition).limit(offset, limit).orderby(column)
+# .id().where(condition).limit(offset, limit).orderby(column)
+# .max().where(condition).limit(offset, limit).orderby(column)
+# .sum().where(condition).limit(offset, limit).orderby(column)
+# .count().where(condition).limit(offset, limit).orderby(column)
+
+# .update().set(model)
+# .update().set(attrs).where(condition)
+
+# .delete(model)
+# .delete().where(condition)
+
+class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
+  max_retry_times: 3
+
+  constructor: (@schema) ->
 
   clone: -> new @constructor @
 
-  where: (where) ->
-    @_where = @qengine where
-    @
+  to_sql: ->
+    # { fields } = @schema.$table
 
-  limit: (offset, limit) ->
-    @_limit = if offset? then new Limit offset, limit
+    # @_orderby.column = fields[@_orderby.column].column if @_orderby?
+    @["to_#{@_query_type}_sql"]()
+
+  to_select_sql: ->
+    [
+      "
+        #{@_select.to_sql()}
+        #{@_where?.to_sql()}
+        #{@_orderby?.to_sql() ? ''}
+        #{@_limit?.to_sql() ? ''}
+      "
+      @getargs @_where?.getargs(), @_orderby?.getargs(), @_limit?.getargs()
+    ]
+
+  to_insert_sql: ->
+    [
+      "
+        #{@_insert.to_sql()}
+        #{@_values.to_sql()}
+      "
+      @getargs @_values.getargs()
+    ]
+
+  to_update_sql: ->
+    [
+      "
+        #{@_update.to_sql()}
+        #{@_set.to_sql()}
+        #{@_where.to_sql()}
+      "
+      @getargs @_set.getargs(), @_where.getargs()
+    ]
+
+  to_delete_sql: ->
+    [
+      "
+        #{@_delete.to_sql()}
+        #{@_where.to_sql()}
+      "
+      @getargs @_where.getargs()
+    ]
+
+  getargs: (args...) -> lo(args).compact().flattenDeep().value()
+
+  execute: (options, callback) ->
+    if typeof options is "function"
+      callback = options
+      options = {}
+
+    retried = @max_retry_times
+
+    after_query = (err, rows) =>
+      return callback err if err?
+      # TODO
+      @_select.convert rows, options, (err, objects) ->
+        return query() if err.name is "AGAIN" and retried-- > 0
+        callback err, objects
+
+    do query = => @_query after_query
+    # @_query callback
+
+  _query: (callback) -> @schema.$database.query @to_sql()..., callback
+
+  limit: (limit, offset) ->
+    @_limit = if offset? then new Limit limit, offset
     @
 
   orderby: (column) ->
     @_orderby = if column? new Orderby column
     @
 
-  to_sql: ->
-    { fields } = @schema.$table
-
-    if @_where?
-      if @_where.filters?
-        @_where.filters = @convert @_where.filters
-      else
-        @_where.column = fields[@_where.column]
-    
-    @_orderby.column = fields[@_orderby.column].column if @_orderby?
-
-    "
-      #{@_select.to_sql() ? ''}
-      WHERE #{@_where?.to_sql() ? ''}
-      #{@_orderby?.to_sql() ? ''}
-      #{@_limit?.to_sql() ? ''}
-    "
-  
-  getargs: ->
-
   select: ->
     @_select = new Select @schema
+    @_query_type = "select"
     @
+
+  where: (condition) ->
+    @_where = new Where @schema, condition
+    @
+
+  update: ->
+    @_update = new Update @schema#, attrs
+    @_query_type = "update"
+    @
+
+  set: (entry) ->
+    attrs = entry.changed_attributes?() ? entry
+    @_set = new UpdateSet @schema, attrs
+
+    if entry instanceof @schema
+      # 如果传入 model, 则默认根据主键查询更新
+      condition = {}
+      condition[pk] = value for pk, value of entry.attributes when pk in @schema.$table.pks
+      @where condition
+    @
+
+  delete: (entry) ->
+    @_delete = new Delete @schema
+    @_query_type = "delete"
+
+    if entry instanceof @schema
+      # 如果传入 model, 则默认根据主键查询删除
+      condition = {}
+      condition[pk] = value for pk, value of entry.attributes when pk in @schema.$table.pks
+      @where condition
+    @
+
+  insert: ->
+    @_insert = new Insert @schema
+    @_query_type = "insert"
+    @
+  
+  values: (model) ->
+    @_values = new InsertValues model
+    @
+
   id: ->
     @_select = new Select.Id @schema
+    @_query_type = "select"
     @
+
   count: ->
     @_select = new Select.Count @schema
+    @_query_type = "select"
     @
+
   max: (column) ->
     @_select = new Select.Max @schema, column
+    @_query_type = "select"
     @
+
   sum: (columns) ->
     @_select = new Select.Sum @schema, columns
+    @_query_type = "select"
     @
 
-  and: (args...) -> new Where.And args
-  or: (args...) -> new Where.Or args
-  xor: (args...) -> new Where.Xor args
-  not: (args...) -> new Where.Not args
+class Where
+  constructor: (@schema, @condition) -> ooq.setup_ffi operators_ffi
 
-  like: (column, value) -> new Where column, "like", value
-  eq: (column, value) -> new Where column, "=", value
-  neq: (column, value) -> new Where column, "<>", value
-  gt: (column, value) -> new Where column, ">", value
-  gte: (column, value) -> new Where column, ">=", value
-  lt: (column, value) -> new Where column, "<", value
-  lte: (column, value) -> new Where column, "<=", value
-  isNull: (column) -> new Where.Null column
-  isNotNull: (column) -> new Where.NotNull column
+  # transform: (where) ->
+  #   unless lo.isArray where.filters
+  #     # 关系运算符的 column 属性解析为 table field
+  #     where.column = @schema.$table.fields[where.column]
+  #   else
+  #     for sub_where in where.filters
+  #       # if lo.isArray filter
+  #       #   @convert_filters filter
+  #       @transform sub_where
+  #       else if filter.filters?
+  #         filter.filters = @convert_filters filter.filters
+  #         filter
+  #       else
+  #         filter.column = @schema.$table.fields[filter.column].column
+  #         filter
+
+  to_sql: ->
+    return "" unless @condition?
+
+    { fields } = @schema.$table
+    { tree } = new ooq.Parser @condition
+
+    # 只有逻辑运算符(AND,OR,NOT,XOR)包含 filters 属性
+    # if where.filters?
+    #   where.filters = @convert_filters where.filters
+    # # 关系运算符的 column 属性解析为 table field
+    # else
+    #   where.column = fields[where.column]
+
+    # @transform where
+
+    "WHERE #{(new ooq.SemanticAnalysis tree).query_code.to_sql()}"
 
 class Select
   constructor: (@schema) ->
@@ -79,16 +211,31 @@ class Select
   to_sql: ->
     { name, pks } = @schema.$table
     cols = ("`#{column}`" for { column } in pks).join ","
+
     "SELECT #{cols} FROM `#{name}`"
-  
-  convert: (rows, options, callback) ->
+
+  # TODO
+  convert_result: (rows, options, callback) ->
+    # return callback null, [] if lo.isEmpty rows
+    callback null, rows ? []
+    # @schema.find_by_ids rows, options, (err, objects) =>
+    #   return callback err if err?
+
+    #   missed = for row, idx in rows when not objects[idx]? then row
+    #   unless lo.isEmpty missed
+    #     # 清空缓存重新查询
+    #     clean_q = for id in missed then new Promise (resolve) => $schema.cache.del @schema.cache_key(id), resolve
+    #     Promise.all clean_q
+    #     .then -> callback new AGAIN
+    #   else
+    #     callback err, objects
 
 class Select.Id extends Select
-  convert: (rows, options, callback) -> setImmediate callback, null, rows
+  convert_result: (rows, options, callback) -> callback null, rows
 
 class Select.Count extends Select
   to_sql: -> "SELECT COUNT(*) AS `count` FROM `#{@schema.$table.name}`"
-  convert: (rows, options, callback) ->
+  convert_result: (rows, options, callback) -> callback null, +rows?[0]?.count
 
 class Select.Max extends Select
   constructor: (schema, column) ->
@@ -97,7 +244,7 @@ class Select.Max extends Select
 
   to_sql: -> "SELECT MAX(`#{@_column}`) AS `max` FROM `#{@schema.$table.name}`"
 
-  convert: (rows, options, callback) ->
+  convert_result: (rows, options, callback) -> callback null, +rows?[0]?.max
 
 class Select.Sum extends Select
   constructor: (schema, columns) ->
@@ -109,57 +256,68 @@ class Select.Sum extends Select
     sum = ("SUM(`#{fields[column].column}`) AS `#{column}`" for column in @_columns).join ","
     "SELECT #{sum} FROM `#{@schema.$table.name}`"
 
-  convert: (rows, options, callback) ->
-
-class Where
-  constructor: (@column, @operator, @value) ->
-  to_sql: -> "`#{@column}` #{@operator} ?"
-  getargs: -> [@value]
-
-class Where.Null extends Where
-  to_sql: -> "`#{column}` IS NULL"
-  getargs: -> []
-
-class Where.NotNull extends Where
-  to_sql: -> "`#{column}` IS NOT NULL"
-  getargs: -> []
-
-class Where.And
-  $operator: "AND"
-  constructor: (args...) ->
-    @filters = 
-  to_sql: ->
-  getargs: ->
-
-class Where.Or extends Where.And
-  $operator: "OR"
-
-class Where.Xor extends Where.And
-  $operator: "XOR"
-
-class Where.Not extends Where.And
-  $operator: "NOT"
-  to_sql: ->
+  convert_result: (rows, options, callback) -> callback null, rows?[0]
 
 class Limit
   constructor: (@limit, @offset = off) ->
-  to_sql: ->
-    if @offset? or @offset is 0
-      "LIMIT #{sql} ?, ?"
-    else
-      "LIMIT #{sql} ?"
-
-  getargs: ->
+  to_sql: -> if @offset or @offset is 0 then "LIMIT #{sql} ?, ?" else "LIMIT #{sql} ?"
+  getargs: -> if @offset or @offset is 0 then [@offset, @limit] else [@limit]
 
 class Orderby
   constructor: (@column) ->
     @order = "ASC"
-    if typeof @column is "object"
+
+    if lo.isObject @column
       [column] = Object.keys @column
-      @order = @column[column].toLowerCase()
+      @order = @column[column].toUpperCase()
       @column = column
-  to_sql: ->
-    sql = "ORDER BY `#{@column}` #{@order}"
+
+  to_sql: -> "ORDER BY `#{@column}` #{@order}"
   getargs: -> []
+
+class Update
+  constructor: (@schema) ->
+  to_sql: ->
+    { name } = @schema.$table
+
+    """
+      UPDATE `#{name}`
+    """
+
+class Delete extends Update
+  to_sql: ->
+    { name } = @schema.$table
+
+    """
+      DELETE FROM `#{name}`
+    """
+
+class Insert extends Update
+  to_sql: ->
+    { name, non_auto } = @schema.$table
+    cols = ("`#{column}`" for { column } in non_auto).join ","
+
+    """
+      INSERT INTO `#{name}` (#{cols})
+    """
+
+class InsertValues
+  constructor: (@model) -> { @$schema } = @model
+  to_sql: ->
+    { non_auto } = @$schema.$table
+
+    "VALUES (#{('?' for 1..non_auto.length).join ','})"
+
+  getargs: -> field.serialize @model.get field.column for field in @$schema.$table.non_auto
+
+class UpdateSet
+  constructor: (@schema, @attrs) ->
+  to_sql: ->
+    { non_pks } = @schema.$table
+    update_set = ("`#{field.column}` = ?" for field in non_pks when @attrs[field.column]?).join ","
+
+    "SET #{update_set}"
+
+  getargs: -> field.serialize @attrs[field.column] for field in @schema.$table.non_pks when @attrs[field.column]?
 
 module.exports = Query

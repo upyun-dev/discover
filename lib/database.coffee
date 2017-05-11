@@ -1,9 +1,6 @@
 mysql = require "mysql"
 generic_pool = require "generic-pool"
 
-# Breaking changes:
-# cfg.poolSize => cfg.poolsize
-
 # News:
 # query, next_sequence => 现在返回 Promise
 
@@ -30,7 +27,7 @@ class DataBase
       db.query sql, values, ([err, args...]...) ->
         pool.release db
         callback? err, args...
-        err ? throw err
+        err and throw err
         resolve args...
 
   # pub APIs
@@ -45,7 +42,7 @@ class DataBase
 
   next_sequence: (name, callback) ->
     sql = """
-      INSERT INTO `sequence` (`name`) VALUES(?) ON DUPLICATE KEY UPDATE `id` = LAST_INSERT_ID(`id` + 1)
+      INSERT INTO `sequence` (`#{name}`) VALUES(?) ON DUPLICATE KEY UPDATE `id` = LAST_INSERT_ID(`id` + 1)
     """
 
     @query sql, [name], (err, { insertId } = {}) -> callback? err, insertId
