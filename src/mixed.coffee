@@ -2,7 +2,6 @@ lo = require "lodash"
 Table = require "./table"
 Model = require "./model"
 Schema = require "./schema"
-# Query = require "./query"
 Type = require "./type"
 
 boxed = (field) -> new (Type[field.type] ? Type.raw)
@@ -24,7 +23,6 @@ create = (database, cache, pattern) ->
     @$cache: cache
     @$database: database
 
-    # @$query: new Query @
     @$table: new Table { name: tablename, fields: boxed_fields }
 
     @_before_hooks: {}

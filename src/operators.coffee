@@ -3,7 +3,7 @@ lo = require "lodash"
 class Operator
   constructor: (@column, @$name, @value) ->
   to_sql: -> "`#{@column}` #{@$name} ?"
-  getargs: -> [@value]  
+  getargs: -> [@value]
 
 class Operator.Null
   $name: "NULL"

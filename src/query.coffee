@@ -28,8 +28,6 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   constructor: (@schema) ->
 
-  clone: -> new @constructor @
-
   to_sql: ->
     # { fields } = @schema.$table
 
@@ -87,7 +85,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     after_query = (err, rows) =>
       return callback err if err?
       # TODO
-      @_select.convert rows, options, (err, objects) ->
+      @["_#{@_query_type}"].convert_result rows, (err, objects) ->
         return query() if err.name is "AGAIN" and retried-- > 0
         callback err, objects
 
@@ -215,9 +213,14 @@ class Select
     "SELECT #{cols} FROM `#{name}`"
 
   # TODO
-  convert_result: (rows, options, callback) ->
+  convert_result: (rows, callback) ->
+    { fields } = @schema.$table
+    for row in rows ? []
+      row[column] = fields[column].extract value for column, value of row
+    callback null, rows
+
     # return callback null, [] if lo.isEmpty rows
-    callback null, rows ? []
+    # callback null, rows ? []
     # @schema.find_by_ids rows, options, (err, objects) =>
     #   return callback err if err?
 
@@ -231,7 +234,6 @@ class Select
     #     callback err, objects
 
 class Select.Id extends Select
-  convert_result: (rows, options, callback) -> callback null, rows
 
 class Select.Count extends Select
   to_sql: -> "SELECT COUNT(*) AS `count` FROM `#{@schema.$table.name}`"
@@ -277,6 +279,8 @@ class Orderby
 
 class Update
   constructor: (@schema) ->
+  convert_result: (result, callback) -> callback null, result
+
   to_sql: ->
     { name } = @schema.$table
 

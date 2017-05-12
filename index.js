@@ -1,2 +1,2 @@
 require('coffee-script/register');
-module.exports = require('./lib/discover');
+module.exports = require('./src/discover');
