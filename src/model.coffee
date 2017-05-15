@@ -2,6 +2,21 @@
 { createHash } = require "crypto"
 lo = require "lodash"
 
+resolve_args: (args) ->
+  switch
+    when typeof args[0] is "object"
+      [
+        args[0].attributes ? args[0]
+        args[1] ? {}
+      ]
+    when typeof args[0] is "string" and args.length > 1
+      [
+        "#{args[0]}": args[1]
+        args[2] ? {}
+      ]
+    else 
+      [{}, {}]
+
 class Model extends EventEmitter
   constructor: (attributes = {}) ->
     super()
@@ -26,43 +41,27 @@ class Model extends EventEmitter
 
   has: (attr) -> attr of @attributes
   get: (attr) -> @attributes[attr]
-
-  _resolve_args: (args) ->
-    switch
-      when typeof args[0] is "object"
-        [
-          args[0].attributes ? args[0]
-          args[1] ? {}
-        ]
-      when typeof args[0] is "string" and args.length > 1
-        [
-          "#{args[0]}": args[1]
-          args[2] ? {}
-        ]
-      else 
-        [{}, {}]
-
   set: (args...) ->
     return @ if lo.isEmpty args
 
-    [attrs, options] = @_resolve_args args
+    [attrs, options] = resolve_args args
 
     return @ if lo.isEmpty attrs
 
     current_attrs = @attributes
 
     # 检查修改是否合法
-    return no unless options.silent or not @validate or @perform_validate attrs, options
+    return no unless options.silent or not @validate or @_perform_validate attrs, options
 
     changing = @_changing
     @_changing = yes
 
-    @update_attrs current_attrs, attrs, options
+    @_update_attrs current_attrs, attrs, options
 
     unless changing or options.silent or @_changed
       @emit "change", @, options
 
-  update_attrs = (current_attrs, attrs, options) ->
+  _update_attrs = (current_attrs, attrs, options) ->
     for key, value of attrs when current_attrs[key] isnt value
       unless options.silent
         @_previous_attributes ?= {}
@@ -73,7 +72,7 @@ class Model extends EventEmitter
       @_changed = yes
 
   # If a specific `error` callback has been passed, call that instead of firing the general `'error'` event.
-  perform_validate: (attrs, options) ->
+  _perform_validate: (attrs, options) ->
     error = @validate attrs
     return yes unless error
 

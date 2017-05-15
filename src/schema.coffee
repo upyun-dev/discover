@@ -1,3 +1,4 @@
+async = require "async"
 Query = require "./query"
 
 class Schema
@@ -234,7 +235,8 @@ class Schema
         for { type, column } in @$table.pks
           if type is "binary" then key[column].toString "hex" else "#{key[column]}"
       else [key]
-    .join "-"
+    
+    id = id.join "-"
 
     createHash "md5"
     .update "#{$table.name}:#{id}", "utf8"

@@ -15,15 +15,15 @@ cache:
     - node_modules
 
 stages:
-  - lint
+  # - lint
   - test
 
-lint:
-  stage: lint
-  script:
-    - npm run lint
-  tags:
-    - offline-test
+# lint:
+#   stage: lint
+#   script:
+#     - npm run lint
+#   tags:
+#     - offline-test
 
 test:
   services:
@@ -34,7 +34,7 @@ test:
     MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
   stage: test
   script:
-    - bin/init-database.js
+    - bin/init-database.coffee
     - npm run test-cov
   tags:
     - offline-test

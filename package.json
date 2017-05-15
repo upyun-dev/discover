@@ -1,6 +1,6 @@
 {
   "name": "@upyun/discover",
-  "version": "0.3.7",
+  "version": "0.4",
   "description": "ORM",
   "main": "index.js",
   "repository": {
@@ -12,12 +12,11 @@
     "npm": ">=3.8.6"
   },
   "scripts": {
-    "lint": "gulp",
-    "test": "NODE_ENV=test node_modules/mocha/bin/_mocha",
-    "test-cov": "NODE_ENV=test istanbul cover node_modules/mocha/bin/_mocha"
+    "test": "NODE_ENV=test node_modules/.bin/_mocha test",
+    "test-cov": "NODE_ENV=test node_modules/.bin/istanbul report text-summary lcov"
   },
   "dependencies": {
-    "async": "^2.0.1",
+    "async": "^2.4.0",
     "bignumber.js": "^4.0.0",
     "coffee-script": "^1.12.5",
     "debug": "^2.2.0",
@@ -30,9 +29,10 @@
     "ooq": "^0.0.2",
     "underscore": "^1.8.3"
   },
-  "author": "Zola, PenaFong, ran <abbshr@outlook.com>",
-  "license": "ISC",
+  "author": "ran <abbshr@outlook.com>",
+  "license": "MIT",
   "devDependencies": {
+    "coffee-coverage": "^2.0.1",
     "gulp": "^3.9.0",
     "gulp-jscs": "^4.0.0",
     "gulp-jshint": "^2.0.1",

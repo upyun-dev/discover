@@ -2,19 +2,12 @@ lo = require "lodash"
 Table = require "./table"
 Model = require "./model"
 Schema = require "./schema"
-Type = require "./type"
 
-boxed = (field) -> new (Type[field.type] ? Type.raw)
 wash = (pattern) -> delete pattern[attr] for attr in ["fields", "indices", "tablename"]
 create = (database, cache, pattern) ->
   { fields = [], indices = [], tablename } = pattern_copied = lo.cloneDeep pattern
-  boxed_fields = []
 
-  for field in fields
-    { index, unique } = field
-    boxed_fields.push boxed field
-    indices.push field if index? or unique?
-
+  indices.push field for field in fields when field.index? or field.unique?
   wash pattern_copied
 
   # 每次返回一个新的混入模型
@@ -23,7 +16,7 @@ create = (database, cache, pattern) ->
     @$cache: cache
     @$database: database
 
-    @$table: new Table { name: tablename, fields: boxed_fields }
+    @$table: new Table { name: tablename, fields }
 
     @_before_hooks: {}
     @_after_hooks: {}
@@ -35,17 +28,13 @@ create = (database, cache, pattern) ->
     lo.assign @::, pattern_copied
 
     # 根据索引或独立键生成静态查询方法
+    # 驼峰式命名变为蛇形命名
     for { column, unique } in indices
-      suffix = column.replace /\b[a-z]/g, (match) -> match.toLowerCase()
-      method_name = "find_by_#{suffix}"
-      continue if @[method_name]?
-
-      @[method_name] = (args...) ->
-        args.unshift column
-        @[if unique? then "find_by_unique_key" else "find_by_index"] args...
+      suffix = column.replace /[A-Z]/g, (c, i, str) -> "#{if i is 0 or str[i - 1] is "_" then "" else "_"}#{c.toLowerCase()}"
+      @["find_by_#{suffix}"] ?= (args...) -> @["find_by_#{if unique? then "unique_key" else "index"}"] column, args...
 
     # 定义 model attrs 的 getter/setter 属性
-    for { column } in boxed_fields
+    for { column } in fields
       Object.defineProperty @::, column,
         get: -> @get column
         set: (value) -> @set column, value

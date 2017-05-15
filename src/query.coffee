@@ -41,7 +41,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
         #{@_where?.to_sql()}
         #{@_orderby?.to_sql() ? ''}
         #{@_limit?.to_sql() ? ''}
-      "
+      ".trim()
       @getargs @_where?.getargs(), @_orderby?.getargs(), @_limit?.getargs()
     ]
 
@@ -50,7 +50,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
       "
         #{@_insert.to_sql()}
         #{@_values.to_sql()}
-      "
+      ".trim()
       @getargs @_values.getargs()
     ]
 
@@ -60,7 +60,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
         #{@_update.to_sql()}
         #{@_set.to_sql()}
         #{@_where.to_sql()}
-      "
+      ".trim()
       @getargs @_set.getargs(), @_where.getargs()
     ]
 
@@ -69,7 +69,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
       "
         #{@_delete.to_sql()}
         #{@_where.to_sql()}
-      "
+      ".trim()
       @getargs @_where.getargs()
     ]
 
@@ -90,16 +90,18 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
         callback err, objects
 
     do query = => @_query after_query
-    # @_query callback
 
-  _query: (callback) -> @schema.$database.query @to_sql()..., callback
+  _query: (callback) ->
+    @schema.$database.query @to_sql()...
+    .then (rows) -> callback null, rows
+    .catch (err) -> callback err
 
   limit: (limit, offset) ->
-    @_limit = if offset? then new Limit limit, offset
+    @_limit = if limit? then new Limit limit, offset
     @
 
   orderby: (column) ->
-    @_orderby = if column? new Orderby column
+    @_orderby = if column? then new Orderby column
     @
 
   select: ->
@@ -168,8 +170,12 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     @
 
 class Where
-  constructor: (@schema, @condition) -> ooq.setup_ffi operators_ffi
+  constructor: (@schema, @condition) ->
+    ooq.setup_ffi operators_ffi
 
+    { fields } = @schema.$table
+    { tree } = new ooq.Parser @condition
+    @node = (new ooq.SemanticAnalysis tree).query_code
   # transform: (where) ->
   #   unless lo.isArray where.filters
   #     # 关系运算符的 column 属性解析为 table field
@@ -185,13 +191,9 @@ class Where
   #       else
   #         filter.column = @schema.$table.fields[filter.column].column
   #         filter
-
+  getargs: -> @node.getargs?() ? []
   to_sql: ->
-    return "" unless @condition?
-
-    { fields } = @schema.$table
-    { tree } = new ooq.Parser @condition
-
+    return "" unless @condition? and not lo.isEmpty @condition
     # 只有逻辑运算符(AND,OR,NOT,XOR)包含 filters 属性
     # if where.filters?
     #   where.filters = @convert_filters where.filters
@@ -201,16 +203,17 @@ class Where
 
     # @transform where
 
-    "WHERE #{(new ooq.SemanticAnalysis tree).query_code.to_sql()}"
+    "WHERE #{@node.to_sql()}"
 
 class Select
   constructor: (@schema) ->
 
   to_sql: ->
-    { name, pks } = @schema.$table
-    cols = ("`#{column}`" for { column } in pks).join ","
+    { name, pks, columns } = @schema.$table
+    # TODO
+    # cols = ("`#{column}`" for column in columns).join ","
 
-    "SELECT #{cols} FROM `#{name}`"
+    "SELECT * FROM `#{name}`"
 
   # TODO
   convert_result: (rows, callback) ->
@@ -234,6 +237,11 @@ class Select
     #     callback err, objects
 
 class Select.Id extends Select
+  to_sql: ->
+    { name, pks, columns } = @schema.$table
+    cols = ("`#{column}`" for { column } in pks).join ", "
+
+    "SELECT #{cols} FROM `#{name}`"
 
 class Select.Count extends Select
   to_sql: -> "SELECT COUNT(*) AS `count` FROM `#{@schema.$table.name}`"
@@ -255,24 +263,30 @@ class Select.Sum extends Select
 
   to_sql: ->
     { fields } = @schema.$table
-    sum = ("SUM(`#{fields[column].column}`) AS `#{column}`" for column in @_columns).join ","
+    sum = ("SUM(`#{fields[column].column}`) AS `#{column}`" for column in @_columns).join ", "
     "SELECT #{sum} FROM `#{@schema.$table.name}`"
 
   convert_result: (rows, options, callback) -> callback null, rows?[0]
 
+class Column
+  constructor: (@schema) ->
+  to_sql: -> ("`#{column}`" for column in $table.columns).join ", "
+
 class Limit
   constructor: (@limit, @offset = off) ->
-  to_sql: -> if @offset or @offset is 0 then "LIMIT #{sql} ?, ?" else "LIMIT #{sql} ?"
+  to_sql: -> "LIMIT #{if @offset or @offset is 0 then '?, ?' else '?'}"
   getargs: -> if @offset or @offset is 0 then [@offset, @limit] else [@limit]
 
 class Orderby
   constructor: (@column) ->
     @order = "ASC"
 
+    # TODO
     if lo.isObject @column
-      [column] = Object.keys @column
-      @order = @column[column].toUpperCase()
-      @column = column
+      { @order, @column } = @column
+      # [column] = Object.keys @column
+      @order = @order.toUpperCase()
+      # @column = column
 
   to_sql: -> "ORDER BY `#{@column}` #{@order}"
   getargs: -> []
@@ -299,7 +313,7 @@ class Delete extends Update
 class Insert extends Update
   to_sql: ->
     { name, non_auto } = @schema.$table
-    cols = ("`#{column}`" for { column } in non_auto).join ","
+    cols = ("`#{column}`" for { column } in non_auto).join ", "
 
     """
       INSERT INTO `#{name}` (#{cols})
@@ -310,7 +324,7 @@ class InsertValues
   to_sql: ->
     { non_auto } = @$schema.$table
 
-    "VALUES (#{('?' for 1..non_auto.length).join ','})"
+    "VALUES (#{('?' for [1..non_auto.length]).join ', '})"
 
   getargs: -> field.serialize @model.get field.column for field in @$schema.$table.non_auto
 
@@ -318,7 +332,7 @@ class UpdateSet
   constructor: (@schema, @attrs) ->
   to_sql: ->
     { non_pks } = @schema.$table
-    update_set = ("`#{field.column}` = ?" for field in non_pks when @attrs[field.column]?).join ","
+    update_set = ("`#{field.column}` = ?" for field in non_pks when @attrs[field.column]?).join ", "
 
     "SET #{update_set}"
 
