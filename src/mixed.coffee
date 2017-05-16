@@ -29,8 +29,8 @@ create = (database, cache, pattern) ->
 
     # 根据索引或独立键生成静态查询方法
     # 驼峰式命名变为蛇形命名
-    for { column, unique } in indices
-      suffix = column.replace /[A-Z]/g, (c, i, str) -> "#{if i is 0 or str[i - 1] is "_" then "" else "_"}#{c.toLowerCase()}"
+    indices.forEach ({ column, unique }) =>
+      suffix = column.replace /[A-Z]/g, (c, i, str) -> "#{if i is 0 or str[i - 1] is '_' then '' else '_'}#{c.toLowerCase()}"
       @["find_by_#{suffix}"] ?= (args...) -> @["find_by_#{if unique? then "unique_key" else "index"}"] column, args...
 
     # 定义 model attrs 的 getter/setter 属性

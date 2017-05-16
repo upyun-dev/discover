@@ -2,10 +2,10 @@ ooq = require "ooq"
 lo = require "lodash"
 operators_ffi = require "./operators"
 
-class AGAIN extends Error
-  constructor: (message) ->
-    super message
-    @name = @constructor.name
+# class AGAIN extends Error
+#   constructor: (message) ->
+#     super message
+#     @name = @constructor.name
     # Error.captureStackTrace @, @constructor
 
 # new Query User
