@@ -28,11 +28,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   constructor: (@schema) ->
 
-  to_sql: ->
-    # { fields } = @schema.$table
-
-    # @_orderby.column = fields[@_orderby.column].column if @_orderby?
-    @["to_#{@_query_type}_sql"]()
+  to_sql: -> @["to_#{@_query_type}_sql"]()
 
   to_select_sql: ->
     [
@@ -76,21 +72,6 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
   getargs: (args...) -> lo(args).compact().flattenDeep().value()
 
   execute: (options) ->
-    # if typeof options is "function"
-    #   callback = options
-    #   options = {}
-
-    # retried = @max_retry_times
-
-    # after_query = (err, rows) =>
-    #   return callback err if err?
-    #   # TODO
-    #   @["_#{@_query_type}"].convert_result rows, (err, objects) ->
-    #     return query() if err?.name is "AGAIN" and retried-- > 0
-    #     callback err, objects
-
-    # do query = => @_query after_query
-
     @schema.$database.query @to_sql()...
     .then (ret) => @["_#{@_query_type}"].convert_result ret
 
@@ -124,15 +105,11 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
   set: (entry) ->
     attrs = entry.changed_attributes?() ? entry
     @_set = new UpdateSet @schema, attrs
-    # console.log @_set
     if entry instanceof @schema
       # 如果传入 model, 则默认根据主键查询更新
       condition = {}
-      # console.log @schema.$table.pks
       for key, value of entry.attributes when key in @schema.$table.pks
-        # console.log key, value
         condition[key] = value
-      # console.log condition
       @where condition
     @
 
@@ -229,20 +206,6 @@ class Select
       object = {}
       object[column] = fields[column].extract value for column, value of row
       object
-
-    # return callback null, [] if lo.isEmpty rows
-    # callback null, rows ? []
-    # @schema.find_by_ids rows, options, (err, objects) =>
-    #   return callback err if err?
-
-    #   missed = for row, idx in rows when not objects[idx]? then row
-    #   unless lo.isEmpty missed
-    #     # 清空缓存重新查询
-    #     clean_q = for id in missed then new Promise (resolve) => $schema.cache.del @schema.cache_key(id), resolve
-    #     Promise.all clean_q
-    #     .then -> callback new AGAIN
-    #   else
-    #     callback err, objects
 
 class Select.Id extends Select
   to_sql: ->

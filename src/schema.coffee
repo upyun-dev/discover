@@ -1,12 +1,10 @@
+lo = require "lodash"
 async = require "async"
 Query = require "./query"
+{ createHash } = require "crypto"
 
 class Schema
-  @all: (options, callback) ->
-    new Query @
-    .select()
-    .execute options, callback
-    .then (objects) => @wrap objects, options
+  @all: (options, callback) -> @find {}, options
 
   @count: (condition, options, callback) ->
     if typeof options is "function"
@@ -23,8 +21,8 @@ class Schema
       callback = options
       options = {}
 
-    { orderby, json, limit, page } = options = Object.assign
-      orderby: if @$table.fields.id? then id: "desc"
+    { orderby, json, limit, page } = options = lo.assign
+      orderby: if @$table.fields.id? then column: "id", order: "desc"
       json: no
       limit: 20
       page: 1
@@ -38,16 +36,17 @@ class Schema
     .orderby orderby
     .limit limit, offset
     .execute { json }, callback
+    .then (objects) => @wrap objects, options
 
   @findone: (condition, options, callback) ->
     if typeof options is "function"
       callback = options
       options = {}
 
-    options = Object.assign json: no, options, limit: 1
-    @find condition, options, (err, rows = []) ->
-      return callback err if err?
-      callback null, rows[0]
+    options = lo.assign json: no, options, limit: 1
+
+    @find condition, options
+    .then ([model]) -> model
 
   @find_with_count: (condition, options, callback) ->
     if typeof options is "function"
@@ -55,77 +54,79 @@ class Schema
       options = null
 
     Promise.all [
-      new Promise (resolve, reject) => @find condition, options, (err, rows) -> if err? then reject err else resolve rows
-      new Promise (resolve, reject) => @count condition, options, (err, total) -> if err? then reject err else resolve total
+      @find condition, options
+      @count condition, options
     ]
-    .then (rows, total) -> callback null, { rows, total }
-    .catch callback
+    .then ([models, total]) -> { models, total }
+    # .catch callback
 
   @find_by_index: (index, value, options, callback) ->
     new Query @
     .select()
     .where "#{index}": value
     .execute options, callback
+    .then (objects) => @wrap objects, options
 
   @find_by_unique_key: (key, value, options, callback) ->
     @find_by_index key, value, options, (err, entities) -> callback err, entities?[0]
+    .then ([model]) -> model
 
   @find_by_id: (id, options, callback) ->
-    @find_by_ids [id], options, (err, [object] = []) -> callback err, object
+    @find_by_ids [id], options
+    .then ([model]) -> model
 
   @find_by_ids: (ids, options, callback) ->
-    return callback new Error "First argument to find_by_ids must be an array of id" unless lo.isArray ids
-    return callback null, [] if lo.isEmpty ids
+    return Promise.reject new Error "First argument to find_by_ids must be an garray of id" unless lo.isArray ids
+    return Promise.resolve [] if lo.isEmpty ids
 
-    keys = for id in ids then [id, @cache_key id]
-
+    keys = new Map
+    keys.set id, @cache_key id for id in ids#then [id, @cache_key id]
     # 先从缓存读
-    @$cache.get keys, (err, rows = []) =>
+    @$cache.get Array.from keys.values()
+    .then (objects = {}) =>
       # 缓存失效从数据库中读
-      missed_redo = for [id, key] in keys when key not of rows
-        new Promise (resolve, reject) => @load id, key, options, (err, row) -> if err? then reject err else resolve rows[key] = row
+      missed_redo = for [id, key] from keys when key not of objects then do (id, key) => @load id, key, options
 
       Promise.all missed_redo
-      .then -> callback null, @wrap rows, options
-      .catch callback
+      .then (models) =>
+        models.push (@wrap objects, options)...
+        models
 
-  @wrap: (rows, options) ->
-    for key, row of rows
-      object = @new_instance row
-      if object and options?.json then object.to_json options.secure else object
+  @wrap: (objects, options) ->
+    for key, object of objects
+      model = @to_model object
+      if model and options?.json then model.to_json options.secure else model
 
-  # TODO
-  @load: (id, key, options, callback) ->
+  # TODO: id type
+  @load: (id, key, options) ->
     { pks } = @$table
-    args = if lo.isArray id and pks.length is id.length
-      id
-    else if typeof id is "object"
-      id[column] for column in pks when column of id
-    else if pks.length is 1
-      [id]
+    condition = {}
 
-    unless args?.length is pks.length
-      return callback new Error "Invalid id arguments"
-
-    # args = for field, idx in pks then args[idx]
-
-    conditions = {}
-    conditions[column] = args[idx] for column, idx in pks
-
-    @find conditions, options, (err, [row] = []) =>
-      if row?
-        @$cache.set key, row, 0, (err) -> callback err, row
+    switch
+      when lo.isArray id and pks.length is id.length
+        condition[column] = id[idx] for column, idx in pks
+      when typeof id is "object" and pks.length is lo.size id
+        condition[column] = id[column] for column in pks when column of id
+      when pks.length is 1
+        condition[pks[0]] = id
       else
-        callback err, row
+        return Promise.reject new Error "Invalid id arguments"
 
-  @find_and_update: (conditions, options, modified, callback) ->
+    @findone condition, options
+    .then (model) =>
+      # 缓存 raw object
+      @$cache.set key, model.to_json(yes), 0
+      # 返回 model
+      model
+
+  @find_and_update: (condition, modified, options, callback) ->
     new Query @
     .update()
     .set modified
     .where condition
     .execute options, callback
 
-  @find_and_delete: (conditions, options, callback) ->
+  @find_and_delete: (condition, options, callback) ->
     new Query @
     .delete()
     .where condition
@@ -133,42 +134,49 @@ class Schema
 
   @insert: (model, callback) ->
     unless model.$schema?
-      callback? new Error "Can not insert non-model object"
-      return this
-    
-    { insert: before_hooks } = @_before_hooks
-    { insert: after_hooks } = @_after_hooks
+      return Promise.reject new Error "Can not insert non-model object"
+      # return this
 
-    @walk model, "validate", (validation_tasks) =>
-      tasks = for task in [before_hooks..., validationTasks..., @_insert.bind(model), after_hooks...] then task.bind model
-      async.waterfall tasks, (err, result) -> callback? err, model.reset()
-    @
+    { insert: before_hooks = [] } = @_before_hooks
+    { insert: after_hooks = [] } = @_after_hooks
+
+    @walk model, "validate"
+    .then (validation_tasks) =>
+      tasks = for task in [before_hooks..., validation_tasks..., @_insert.bind(model), after_hooks...] then task.bind model
+
+      new Promise (resolve, reject) ->
+        async.waterfall tasks, (err) ->
+          err and throw err
+          resolve model.reset()
 
   # bind for model
   @_insert: (done) ->
     new Query @$schema
     .insert()
     .values @
-    .execute (err, info) =>
-      if err?
-        done err, info
-      else
-        @$schema.clean_cache model, =>
-          @set @$schema.$table.auto, info.insertId, silent: yes if @$schema.$table.auto?
-          done null, @
+    .execute()
+    .then ({ id }) =>
+      @set @$schema.$table.auto, id, silent: yes if @$schema.$table.auto?
+      @$schema.clean_cache @
+    .then =>
+      done null, @
+    .catch (err) -> done err
 
   @update: (model, callback) ->
     unless model.$schema?
-      callback? new Error "Can not insert non-model object"
-      return this
+      return Promise.reject new Error "Can not insert non-model object"
 
-    { update: before_hooks } = @_before_hooks
-    { update: after_hooks } = @_after_hooks
+    { update: before_hooks = [] } = @_before_hooks
+    { update: after_hooks = [] } = @_after_hooks
 
-    @walk model, "validate", (validation_tasks) =>
-      tasks = for task in [before_hooks..., validationTasks..., @_update.bind(model), after_hooks...] then task.bind model
-      async.waterfall tasks, (err, result) -> callback? err, model.reset()
-    @
+    @walk model, "validate"
+    .then (validation_tasks) =>
+      tasks = for task in [before_hooks..., validation_tasks..., @_update.bind(model), after_hooks...] then task.bind model
+
+      new Promise (resolve, reject) ->
+        async.waterfall tasks, (err, old_model) ->
+          err and throw err
+          resolve [old_model, model.reset()]
 
   # bind for model
   @_update: (done) ->
@@ -177,29 +185,35 @@ class Schema
     new Query @$schema
     .update()
     .set @
-    .execute (err, info) =>
-      if err?
-        done err, no
-      else
-        @_oldstates = @to_json yes
-        @$schema.clean_cache model, => done null, old_model, @
+    .execute()
+    .then ({ updates }) =>
+      @_oldstates = @to_json yes
+      @$schema.clean_cache @
+    .then => 
+      done null, old_model, @
+    .catch (err) -> done err
 
   @delete: (model, callback) ->
     unless model.$schema?
-      callback? new Error "Can not insert non-model object"
-      return this
+      return Promise.reject new Error "Can not insert non-model object"
 
-    { delete: before_hooks } = @_before_hooks
-    { delete: after_hooks } = @_after_hooks
+    { delete: before_hooks = [] } = @_before_hooks
+    { delete: after_hooks = [] } = @_after_hooks
 
     tasks = for task in [before_hooks..., @_delete.bind(model), after_hooks...] then task.bind model
-    async.waterfall tasks, (err, result) -> callback? err, model.reset()
-    @
 
+    new Promise (resolve, reject) ->
+      async.waterfall tasks, (err) ->
+        err and throw err
+        resolve model.reset()
+
+  # bind for model
   @_delete: (done) ->
     new Query @$schema
     .delete @
-    .execute (err, info) => if err? then done err, info else done null, @
+    .execute()
+    .then ({ deletes }) => done null, @
+    .catch (err) -> done err
 
   @before: (method_name, exec) ->
     if @is_valid method_name
@@ -211,51 +225,49 @@ class Schema
       @_after_hooks[method_name].push (args...) -> exec.apply @, args
     @
 
-  @clean_cache: (val, callback) -> @cache.del @cache_key(val), callback
+  @clean_cache: (val) -> @$cache.del @cache_key val
 
-  @walk: (model, prefix, callback) ->    
-    setImmediate ->
-      ret =
-      for own method_name, method of model when lo.isFunction method and method_name.match /^validate.+/
-        (done) -> model[method_name] (err) -> done err
-      callback ret
+  @walk: (model, prefix) ->
+    ret = for own method_name, method of model when lo.isFunction method and method_name.match /^validate.+/
+      do (method_name) -> (done) -> model[method_name] (err) -> done err
+    Promise.resolve ret
 
   @is_valid: (method) -> ["insert", "update", "delete"].includes method
 
-  # TODO
+  # TODO: id type
   @cache_key: (key) ->
     id =
     switch
       when key?.$schema?
-        for column in @$table.pks
+        for column in @$table.pks.sort()
           { type } = @$table.fields[column]
-          if type is "binary" then key.get(column).toString "hex" else "#{key.get column}"
+          if type is "binary" then key.get(column).toString "hex" else key.get column
       when lo.isArray key
         for val in key
-          if lo.isBuffer val then val.toString "hex" else "#{v}"
+          if lo.isBuffer val then val.toString "hex" else val
       when lo.isObject key
-        for column in @$table.pks
+        for column in @$table.pks.sort()
           { type } = @$table.fields[column]
-          if type is "binary" then key[column].toString "hex" else "#{key[column]}"
-      else [key]
+          if type is "binary" then key[column].toString "hex" else key[column]
+      else [if lo.isBuffer key then key.toString "hex" else key]
     
     id = id.join "-"
 
     createHash "md5"
-    .update "#{$table.name}:#{id}", "utf8"
+    .update "#{@$table.name}:#{id}", "utf8"
     .digest "hex"
 
-  @new_instance: (data) ->
+  @to_model: (data) ->
     return null unless data?
     { fields, columns } = @$table
-    row = {}
+    attrs = {}
 
     for column, field of fields
       value = if data.hasOwnProperty column then data[column] else field.default ? field.default_value()
-      row[column] = value
+      attrs[column] = value
 
-    row[k] = v for k, v of data when k not of fields and not columns.includes k
+    attrs[k] = v for k, v of data when k not of fields and not columns.includes k
 
-    new @ row
+    new @ attrs
 
 module.exports = Schema

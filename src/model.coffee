@@ -1,8 +1,7 @@
 { EventEmitter2: EventEmitter } = require "eventemitter2"
-{ createHash } = require "crypto"
 lo = require "lodash"
 
-resolve_args: (args) ->
+resolve_args = (args) ->
   switch
     when typeof args[0] is "object"
       [

@@ -34,10 +34,9 @@ create = (database, cache, pattern) ->
       @["find_by_#{suffix}"] ?= (args...) -> @["find_by_#{if unique? then "unique_key" else "index"}"] column, args...
 
     # 定义 model attrs 的 getter/setter 属性
-    for { column } in fields
-      do (column) =>
-        Object.defineProperty @::, column,
-          get: -> @get column
-          set: (value) -> @set column, value
+    fields.forEach ({ column }) =>
+      Object.defineProperty @::, column,
+        get: -> @get column
+        set: (value) -> @set column, value
 
 module.exports = ({ database, cache }) -> (pattern) -> create database, cache, pattern
