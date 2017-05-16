@@ -1,4 +1,4 @@
-let { accessSync, constants: { F_OK } } = require("fs");
+const { accessSync, constants: { F_OK } } = require("fs");
 
 try {
   accessSync("./lib", F_OK);
