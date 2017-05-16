@@ -6,7 +6,8 @@ class Table # metadata: table
     @fields = {}
     @pks = []
     @columns = []
-    @auto = []
+    # 只能有一个自增字段: https://github.com/mysqljs/mysql#getting-the-id-of-an-inserted-row
+    @auto = null
     @non_auto = []
     @non_pks = []
     @defaults = {}
@@ -20,8 +21,8 @@ class Table # metadata: table
       @fields[column] = field
       @columns.push column
 
-      (if pk? then @pks else @non_pks).push field
-      (if auto? then @auto else @non_auto).push field
+      (if pk? then @pks else @non_pks).push column
+      if auto? then @auto = column else @non_auto.push column
       @defaults[column] = default_value ? field.default_value?()
 
   box: (field) -> new (Type[field.type] ? Type.raw) field

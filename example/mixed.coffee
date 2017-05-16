@@ -9,20 +9,26 @@ User = Schema
 
   fields: [
     { column: "id", type: "int", pk: yes, auto: yes }
-    { column: "name", type: "raw", default: "hero of the strom" }
-    { name: "col", type: "string" }
-    { column: "json_field", type: "json" }
-    { column: "float_field", type: "double" }
-    { column: "time_field", type: "date" }
+    { column: "name", type: "string", default: "hero of the strom" }
+    { name: "age", type: "int" }
+    { column: "comments", type: "json" }
+    { column: "remark", type: "double" }
+    { column: "last_login", type: "datetime" }
   ]
 
   indices: [
-    { column: "asd", type: "int", unique: yes }
+    { column: "name", type: "string" }
   ]
 
   foo: -> null
   bar: -> null
 
-user = new User id: 1, name: "kafka", col: "fire in the hole", json_field: "{}", float_field: 0.9, time_field: new Date()
+user = new User name: "kafka", age: 10, comments: ["good", "bad", "foo", "bar"], remark: 0.98, last_login: new Date()
 
-console.log user.$schema.$table
+User.all()
+.then (models) ->
+  console.log models[19].id
+  User.count()
+.then (count) ->
+  console.log count
+.catch (err) -> console.error err

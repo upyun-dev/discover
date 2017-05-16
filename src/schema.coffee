@@ -2,10 +2,11 @@ async = require "async"
 Query = require "./query"
 
 class Schema
-  @all: (callback, options) ->
+  @all: (options, callback) ->
     new Query @
     .select()
     .execute options, callback
+    .then (objects) => @wrap objects, options
 
   @count: (condition, options, callback) ->
     if typeof options is "function"
@@ -88,7 +89,7 @@ class Schema
       .then -> callback null, @wrap rows, options
       .catch callback
 
-  @wrap: (rows, options) =>
+  @wrap: (rows, options) ->
     for key, row of rows
       object = @new_instance row
       if object and options?.json then object.to_json options.secure else object
@@ -99,7 +100,7 @@ class Schema
     args = if lo.isArray id and pks.length is id.length
       id
     else if typeof id is "object"
-      id[column] for { column } in pks when column of id
+      id[column] for column in pks when column of id
     else if pks.length is 1
       [id]
 
@@ -109,7 +110,7 @@ class Schema
     # args = for field, idx in pks then args[idx]
 
     conditions = {}
-    conditions[column] = args[idx] for { column }, idx in pks
+    conditions[column] = args[idx] for column, idx in pks
 
     @find conditions, options, (err, [row] = []) =>
       if row?
@@ -142,7 +143,7 @@ class Schema
       tasks = for task in [before_hooks..., validationTasks..., @_insert.bind(model), after_hooks...] then task.bind model
       async.waterfall tasks, (err, result) -> callback? err, model.reset()
     @
-  
+
   # bind for model
   @_insert: (done) ->
     new Query @$schema
@@ -153,7 +154,7 @@ class Schema
         done err, info
       else
         @$schema.clean_cache model, =>
-          @set column, info.insertId, silent: yes for { column } in @$schema.$table.auto
+          @set @$schema.$table.auto, info.insertId, silent: yes if @$schema.$table.auto?
           done null, @
 
   @update: (model, callback) ->
@@ -226,13 +227,15 @@ class Schema
     id =
     switch
       when key?.$schema?
-        for { column, type } in @$table.pks
+        for column in @$table.pks
+          { type } = @$table.fields[column]
           if type is "binary" then key.get(column).toString "hex" else "#{key.get column}"
       when lo.isArray key
         for val in key
           if lo.isBuffer val then val.toString "hex" else "#{v}"
       when lo.isObject key
-        for { type, column } in @$table.pks
+        for column in @$table.pks
+          { type } = @$table.fields[column]
           if type is "binary" then key[column].toString "hex" else "#{key[column]}"
       else [key]
     
@@ -244,12 +247,12 @@ class Schema
 
   @new_instance: (data) ->
     return null unless data?
-    { fields, columns } = $table
+    { fields, columns } = @$table
     row = {}
 
     for column, field of fields
       value = if data.hasOwnProperty column then data[column] else field.default ? field.default_value()
-      row[column] = field.extract value
+      row[column] = value
 
     row[k] = v for k, v of data when k not of fields and not columns.includes k
 

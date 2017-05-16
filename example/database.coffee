@@ -4,7 +4,7 @@ cfg =
   host: "127.0.0.1"
   user: "root"
   password: ""
-  database: "discover1"
+  database: "test"
 
 database = new Database cfg
 

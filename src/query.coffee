@@ -11,11 +11,11 @@ class AGAIN extends Error
 # new Query User
 
 # .select()
-# .select().where(condition).limit(offset, limit).orderby(column)
-# .id().where(condition).limit(offset, limit).orderby(column)
-# .max().where(condition).limit(offset, limit).orderby(column)
-# .sum().where(condition).limit(offset, limit).orderby(column)
-# .count().where(condition).limit(offset, limit).orderby(column)
+# .select().where(condition).limit(count, offset).orderby(column)
+# .id().where(condition).limit(count, offset).orderby(column)
+# .max().where(condition).limit(count, offset).orderby(column)
+# .sum().where(condition).limit(count, offset).orderby(column)
+# .count().where(condition).limit(count, offset).orderby(column)
 
 # .update().set(model)
 # .update().set(attrs).where(condition)
@@ -75,23 +75,26 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   getargs: (args...) -> lo(args).compact().flattenDeep().value()
 
-  execute: (options, callback) ->
-    if typeof options is "function"
-      callback = options
-      options = {}
+  execute: (options) ->
+    # if typeof options is "function"
+    #   callback = options
+    #   options = {}
 
-    retried = @max_retry_times
+    # retried = @max_retry_times
 
-    after_query = (err, rows) =>
-      return callback err if err?
-      # TODO
-      @["_#{@_query_type}"].convert_result rows, (err, objects) ->
-        return query() if err.name is "AGAIN" and retried-- > 0
-        callback err, objects
+    # after_query = (err, rows) =>
+    #   return callback err if err?
+    #   # TODO
+    #   @["_#{@_query_type}"].convert_result rows, (err, objects) ->
+    #     return query() if err?.name is "AGAIN" and retried-- > 0
+    #     callback err, objects
 
-    do query = => @_query after_query
+    # do query = => @_query after_query
 
-  _query: (callback) ->
+    @schema.$database.query @to_sql()...
+    .then (ret) => @["_#{@_query_type}"].convert_result ret
+
+  _query: () ->
     @schema.$database.query @to_sql()...
     .then (rows) -> callback null, rows
     .catch (err) -> callback err
@@ -121,11 +124,15 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
   set: (entry) ->
     attrs = entry.changed_attributes?() ? entry
     @_set = new UpdateSet @schema, attrs
-
+    # console.log @_set
     if entry instanceof @schema
       # 如果传入 model, 则默认根据主键查询更新
       condition = {}
-      condition[pk] = value for pk, value of entry.attributes when pk in @schema.$table.pks
+      # console.log @schema.$table.pks
+      for key, value of entry.attributes when key in @schema.$table.pks
+        # console.log key, value
+        condition[key] = value
+      # console.log condition
       @where condition
     @
 
@@ -136,7 +143,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     if entry instanceof @schema
       # 如果传入 model, 则默认根据主键查询删除
       condition = {}
-      condition[pk] = value for pk, value of entry.attributes when pk in @schema.$table.pks
+      condition[key] = value for key, value of entry.attributes when key in @schema.$table.pks
       @where condition
     @
 
@@ -216,11 +223,12 @@ class Select
     "SELECT * FROM `#{name}`"
 
   # TODO
-  convert_result: (rows, callback) ->
+  convert_result: (rows) ->
     { fields } = @schema.$table
     for row in rows ? []
-      row[column] = fields[column].extract value for column, value of row
-    callback null, rows
+      object = {}
+      object[column] = fields[column].extract value for column, value of row
+      object
 
     # return callback null, [] if lo.isEmpty rows
     # callback null, rows ? []
@@ -239,13 +247,13 @@ class Select
 class Select.Id extends Select
   to_sql: ->
     { name, pks, columns } = @schema.$table
-    cols = ("`#{column}`" for { column } in pks).join ", "
+    cols = ("`#{column}`" for column in pks).join ", "
 
     "SELECT #{cols} FROM `#{name}`"
 
 class Select.Count extends Select
   to_sql: -> "SELECT COUNT(*) AS `count` FROM `#{@schema.$table.name}`"
-  convert_result: (rows, options, callback) -> callback null, +rows?[0]?.count
+  convert_result: (rows) -> +rows?[0]?.count
 
 class Select.Max extends Select
   constructor: (schema, column) ->
@@ -254,7 +262,7 @@ class Select.Max extends Select
 
   to_sql: -> "SELECT MAX(`#{@_column}`) AS `max` FROM `#{@schema.$table.name}`"
 
-  convert_result: (rows, options, callback) -> callback null, +rows?[0]?.max
+  convert_result: (rows) -> +rows?[0]?.max
 
 class Select.Sum extends Select
   constructor: (schema, columns) ->
@@ -266,11 +274,11 @@ class Select.Sum extends Select
     sum = ("SUM(`#{fields[column].column}`) AS `#{column}`" for column in @_columns).join ", "
     "SELECT #{sum} FROM `#{@schema.$table.name}`"
 
-  convert_result: (rows, options, callback) -> callback null, rows?[0]
+  convert_result: (rows) -> rows?[0]
 
-class Column
-  constructor: (@schema) ->
-  to_sql: -> ("`#{column}`" for column in $table.columns).join ", "
+# class Column
+#   constructor: (@schema) ->
+#   to_sql: -> ("`#{column}`" for column in $table.columns).join ", "
 
 class Limit
   constructor: (@limit, @offset = off) ->
@@ -293,7 +301,7 @@ class Orderby
 
 class Update
   constructor: (@schema) ->
-  convert_result: (result, callback) -> callback null, result
+  convert_result: ({ changedRows }, callback) -> updates: changedRows
 
   to_sql: ->
     { name } = @schema.$table
@@ -303,6 +311,7 @@ class Update
     """
 
 class Delete extends Update
+  convert_result: ({ affectedRows }) -> deletes: affectedRows
   to_sql: ->
     { name } = @schema.$table
 
@@ -311,9 +320,10 @@ class Delete extends Update
     """
 
 class Insert extends Update
+  convert_result: ({ insertId }) -> id: insertId
   to_sql: ->
     { name, non_auto } = @schema.$table
-    cols = ("`#{column}`" for { column } in non_auto).join ", "
+    cols = ("`#{column}`" for column in non_auto).join ", "
 
     """
       INSERT INTO `#{name}` (#{cols})
@@ -326,16 +336,20 @@ class InsertValues
 
     "VALUES (#{('?' for [1..non_auto.length]).join ', '})"
 
-  getargs: -> field.serialize @model.get field.column for field in @$schema.$table.non_auto
+  getargs: ->
+    { non_auto, fields } = @$schema.$table
+    fields[column].serialize @model.get column for column in non_auto
 
 class UpdateSet
   constructor: (@schema, @attrs) ->
   to_sql: ->
     { non_pks } = @schema.$table
-    update_set = ("`#{field.column}` = ?" for field in non_pks when @attrs[field.column]?).join ", "
+    update_set = ("`#{column}` = ?" for column in non_pks when @attrs[column]?).join ", "
 
     "SET #{update_set}"
 
-  getargs: -> field.serialize @attrs[field.column] for field in @schema.$table.non_pks when @attrs[field.column]?
+  getargs: ->
+    { fields, non_pks } = @schema.$table
+    fields[column].serialize @attrs[column] for column in non_pks when @attrs[column]?
 
 module.exports = Query

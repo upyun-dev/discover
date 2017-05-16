@@ -35,8 +35,9 @@ create = (database, cache, pattern) ->
 
     # 定义 model attrs 的 getter/setter 属性
     for { column } in fields
-      Object.defineProperty @::, column,
-        get: -> @get column
-        set: (value) -> @set column, value
+      do (column) =>
+        Object.defineProperty @::, column,
+          get: -> @get column
+          set: (value) -> @set column, value
 
 module.exports = ({ database, cache }) -> (pattern) -> create database, cache, pattern
