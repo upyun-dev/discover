@@ -27,6 +27,7 @@
   "license": "MIT",
   "devDependencies": {
     "coffee-coverage": "^2.0.1",
+    "istanbul": "^0.4.5",
     "mocha": "^3.0.2",
     "should": "^11.1.0"
   }
