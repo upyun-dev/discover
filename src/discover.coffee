@@ -12,18 +12,17 @@ class Discover
   constructor: (db_cfg, cache_cfg) ->
     @database = new DataBase db_cfg
     @cache = new Cache cache_cfg
-
     @mixed = init_schema { @database, @cache }
 
-    @Query = Query
-    @Table = Table
-    @Type = Type
-    @Schema = Schema
-    @Model = Model
-    @Operator = Operator
-    @DataBase = DataBase
-    @Cache = Cache
-    @Mix = init_schema
+  @Query = Query
+  @Table = Table
+  @Type = Type
+  @Schema = Schema
+  @Model = Model
+  @Operator = Operator
+  @DataBase = DataBase
+  @Cache = Cache
+  @Mix = init_schema
 
   create_schema: (params) -> @mixed params
 
