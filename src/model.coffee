@@ -70,11 +70,6 @@ class Model extends EventEmitter
       @attributes[key] = value
       @_changed = yes
 
-      # unless options.silent
-      #   setImmediate (key, value) => 
-      #     @emit "change:#{key}", @, value, options
-      #   , key, value
-
   # If a specific `error` callback has been passed, call that instead of firing the general `'error'` event.
   _perform_validate: (attrs, options) ->
     error = @validate attrs

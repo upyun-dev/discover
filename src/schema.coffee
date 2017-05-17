@@ -179,7 +179,6 @@ class Schema
   @_update: (done) ->
     oldstates = @_oldstates
 
-    console.log (new Query @$schema).update().set(@).to_sql()
     new Query @$schema
     .update()
     .set @

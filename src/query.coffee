@@ -1,6 +1,6 @@
 ooq = require "ooq"
 lo = require "lodash"
-operators_ffi = require "./operators"
+operators_ffi = require "./operator"
 
 # class AGAIN extends Error
 #   constructor: (message) ->
