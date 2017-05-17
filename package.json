@@ -1,12 +1,8 @@
 {
   "name": "@upyun/discover",
-  "version": "0.4",
+  "version": "0.5",
   "description": "ORM",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "ssh://gitlab@gitlab.widget-inc.com:65422/upyun-dns/discover.git"
-  },
   "engines": {
     "node": ">=6.0.0",
     "npm": ">=3.8.6"

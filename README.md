@@ -1,6 +1,3 @@
-[![build status](http://gitlab.widget-inc.com/upyun-dev/discover/badges/develop/build.svg)](http://gitlab.widget-inc.com/upyun-dev/discover/commits/develop)
-
-[![Dependency Status](https://gemnasium.com/badges/882de3f393ed94e9a2bf2fe374e04ff7.svg)](https://gemnasium.com/1cbdb8e638a7b76b88b6450dd36fcbc6)
 ### Dependencies Services
 
 + mysqld
