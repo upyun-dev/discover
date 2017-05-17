@@ -71,11 +71,11 @@ class Model extends EventEmitter
       @_changed = yes
 
   # If a specific `error` callback has been passed, call that instead of firing the general `'error'` event.
-  _perform_validate: (attrs, options) ->
+  _perform_validate: (attrs, options = {}) ->
     error = @validate attrs
     return yes unless error
 
-    if typeof options.error is "function"
+    if lo.isFunction options.error
       options.error @, error, options
     else setImmediate => @emit "error", @, error, options
     no
