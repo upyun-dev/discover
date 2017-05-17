@@ -1,17 +1,17 @@
 { EventEmitter2: EventEmitter } = require "eventemitter2"
 lo = require "lodash"
 
-resolve_args = (args) ->
+resolve_args = ([column = {}, value = {}, options = {}] = []) ->
   switch
-    when typeof args[0] is "object"
+    when lo.isObject column
       [
-        args[0].attributes ? args[0]
-        args[1] ? {}
+        column.attributes ? column
+        value
       ]
-    when typeof args[0] is "string" and args.length > 1
+    when lo.isString column
       [
-        "#{args[0]}": args[1]
-        args[2] ? {}
+        "#{column}": value
+        options
       ]
     else 
       [{}, {}]
@@ -28,9 +28,12 @@ class Model extends EventEmitter
     @attributes = attributes
 
     # 记录改变前的状态, 此为 attrs 初始值
+    # update() 方法后更新 (实现持久化后)
     @_oldstates = @to_json yes
+    # set() 方法后更新
+    @_previous_attributes = {}
     @_changed = no
-    @_previous_attributes = null
+    @_changing = no
 
   to_json: (include_secure) ->
     { $table: { fields } } = @$schema
@@ -43,32 +46,34 @@ class Model extends EventEmitter
   set: (args...) ->
     return @ if lo.isEmpty args
 
-    [attrs, options] = resolve_args args
+    [new_attrs, options] = resolve_args args
 
-    return @ if lo.isEmpty attrs
-
-    current_attrs = @attributes
+    return @ if lo.isEmpty new_attrs
 
     # 检查修改是否合法
-    return no unless options.silent or not @validate or @_perform_validate attrs, options
+    return no unless options.silent or not @validate or @_perform_validate new_attrs, options
 
     changing = @_changing
     @_changing = yes
 
-    @_update_attrs current_attrs, attrs, options
+    @_update_attrs new_attrs, options
 
     unless changing or options.silent or @_changed
-      @emit "change", @, options
+      setImmediate => @emit "change", @, options
 
-  _update_attrs = (current_attrs, attrs, options) ->
-    for key, value of attrs when current_attrs[key] isnt value
-      unless options.silent
-        @_previous_attributes ?= {}
-        @_previous_attributes[key] = current_attrs[key]
-        setImmediate => @emit "change:#{key}", @, value, options
+    @
 
-      current_attrs[key] = value
+  # 更新 _previous_attributes
+  _update_attrs: (new_attrs, options) ->
+    for key, value of new_attrs when @attributes[key] isnt value
+      @_previous_attributes[key] = @attributes[key]
+      @attributes[key] = value
       @_changed = yes
+
+      # unless options.silent
+      #   setImmediate (key, value) => 
+      #     @emit "change:#{key}", @, value, options
+      #   , key, value
 
   # If a specific `error` callback has been passed, call that instead of firing the general `'error'` event.
   _perform_validate: (attrs, options) ->
@@ -77,42 +82,39 @@ class Model extends EventEmitter
 
     if typeof options.error is "function"
       options.error @, error, options
-    else @emit "error", @, error, options
+    else setImmediate => @emit "error", @, error, options
     no
 
   reset: (options) ->
-    @_previous_attributes = null
+    @_previous_attributes = {}
+    @_changing = no
     @_changed = no
     this
 
-  clone: -> new @constructor @
-
+  # 以下断言方法仅在数据提交前(update 方法执行成功前)对内存中缓存的模型有效
+  # 如果在提交后需要获取变更, 可以访问 _oldstates 属性或者 update().then([oldstates]) -> oldstates
   is_changed: (attr) ->
-    unless @_previous_attributes? then no
+    if lo.isEmpty @_previous_attributes then no
     else if attr?
       @_previous_attributes[attr] isnt @attributes[attr]
     else
       @_changed
 
   changed_attributes: (current_attrs) ->
-    return no unless @_previous_attributes?
+    return {} if lo.isEmpty @_previous_attributes
     current_attrs ?= @attributes
     old = @_previous_attributes
-    changed = no
-
-    for key of current_attrs when old[key] isnt current_attrs[key]
-      changed or= {}
-      changed[key] = current_attrs[key]
-
+    changed = {}
+    changed[key] = current_attrs[key] for key of current_attrs when old[key] and old[key] isnt current_attrs[key]
     changed
 
   previous: (attr) ->
-    unless @_previous_attributes? then no
+    if lo.isEmpty @_previous_attributes then null
     else if attr? then @_previous_attributes[attr]
-    else Object.assign {}, @_previous_attributes
+    else lo.assign {}, @_previous_attributes
 
-  insert: (callback) -> @$schema.insert @, callback
-  update: (callback) -> @$schema.update @, callback
-  delete: (callback) -> @$schema.delete @, callback
+  insert: () -> @$schema.insert @
+  update: () -> @$schema.update @
+  delete: () -> @$schema.delete @
 
 module.exports = Model

@@ -34,7 +34,9 @@ create = (database, cache, pattern) ->
       @["find_by_#{suffix}"] ?= (args...) -> @["find_by_#{if unique? then "unique_key" else "index"}"] column, args...
 
     # 定义 model attrs 的 getter/setter 属性
-    fields.forEach ({ column }) =>
+    fields.forEach ({ column, name }) =>
+      throw new Error "must have at least one `column` or `name` field" unless column? or name?
+      column ?= name
       Object.defineProperty @::, column,
         get: -> @get column
         set: (value) -> @set column, value

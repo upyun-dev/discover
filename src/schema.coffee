@@ -88,9 +88,8 @@ class Schema
       missed_redo = for [id, key] from keys when key not of objects then do (id, key) => @load id, key, options
 
       Promise.all missed_redo
-      .then (models) =>
-        models.push (@wrap objects, options)...
-        models
+      .then (models) -> model for model in models when model?
+      .then (models) => [models..., (@wrap objects, options)...]
 
   @wrap: (objects, options) ->
     for key, object of objects
@@ -115,7 +114,7 @@ class Schema
     @findone condition, options
     .then (model) =>
       # 缓存 raw object
-      @$cache.set key, model.to_json(yes), 0
+      model and @$cache.set key, model.to_json(yes), 0
       # 返回 model
       model
 
@@ -140,14 +139,13 @@ class Schema
     { insert: before_hooks = [] } = @_before_hooks
     { insert: after_hooks = [] } = @_after_hooks
 
-    @walk model, "validate"
-    .then (validation_tasks) =>
-      tasks = for task in [before_hooks..., validation_tasks..., @_insert.bind(model), after_hooks...] then task.bind model
+    validation_tasks = @walk model, "validate"
+    tasks = for task in [before_hooks..., validation_tasks..., @_insert.bind(model), after_hooks...] then task.bind model
 
-      new Promise (resolve, reject) ->
-        async.waterfall tasks, (err) ->
-          err and throw err
-          resolve model.reset()
+    new Promise (resolve, reject) ->
+      async.waterfall tasks, (err) ->
+        err and throw err
+        resolve model.reset()
 
   # bind for model
   @_insert: (done) ->
@@ -169,19 +167,19 @@ class Schema
     { update: before_hooks = [] } = @_before_hooks
     { update: after_hooks = [] } = @_after_hooks
 
-    @walk model, "validate"
-    .then (validation_tasks) =>
-      tasks = for task in [before_hooks..., validation_tasks..., @_update.bind(model), after_hooks...] then task.bind model
+    validation_tasks = @walk model, "validate"
+    tasks = for task in [before_hooks..., validation_tasks..., @_update.bind(model), after_hooks...] then task.bind model
 
-      new Promise (resolve, reject) ->
-        async.waterfall tasks, (err, old_model) ->
-          err and throw err
-          resolve [old_model, model.reset()]
+    new Promise (resolve, reject) ->
+      async.waterfall tasks, (err, oldstates) ->
+        err and throw err
+        resolve [oldstates, model.reset()]
 
   # bind for model
   @_update: (done) ->
-    old_model = @_oldstates
+    oldstates = @_oldstates
 
+    console.log (new Query @$schema).update().set(@).to_sql()
     new Query @$schema
     .update()
     .set @
@@ -190,7 +188,7 @@ class Schema
       @_oldstates = @to_json yes
       @$schema.clean_cache @
     .then => 
-      done null, old_model, @
+      done null, oldstates, @
     .catch (err) -> done err
 
   @delete: (model, callback) ->
@@ -227,14 +225,16 @@ class Schema
 
   @clean_cache: (val) -> @$cache.del @cache_key val
 
+  # 返回 validation 任务队列
   @walk: (model, prefix) ->
-    ret = for own method_name, method of model when lo.isFunction method and method_name.match /^validate.+/
+    for own method_name, method of model when lo.isFunction method and method_name.match /^validate.+/
       do (method_name) -> (done) -> model[method_name] (err) -> done err
-    Promise.resolve ret
 
+  # 检查方法是否允许被添加 hook
   @is_valid: (method) -> ["insert", "update", "delete"].includes method
 
   # TODO: id type
+  # 多个 key 按照字典顺序排序
   @cache_key: (key) ->
     id =
     switch
