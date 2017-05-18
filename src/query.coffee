@@ -11,11 +11,11 @@ operators_ffi = require "./operator"
 # new Query User
 
 # .select()
-# .select().where(condition).limit(count, offset).orderby(column)
-# .id().where(condition).limit(count, offset).orderby(column)
-# .max().where(condition).limit(count, offset).orderby(column)
-# .sum().where(condition).limit(count, offset).orderby(column)
-# .count().where(condition).limit(count, offset).orderby(column)
+# .select().where(condition).limit(count, offset).order_by(column)
+# .id().where(condition).limit(count, offset).order_by(column)
+# .max().where(condition).limit(count, offset).order_by(column)
+# .sum().where(condition).limit(count, offset).order_by(column)
+# .count().where(condition).limit(count, offset).order_by(column)
 
 # .update().set(model)
 # .update().set(attrs).where(condition)
@@ -35,10 +35,10 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
       "
         #{@_select.to_sql()}
         #{@_where?.to_sql()}
-        #{@_orderby?.to_sql() ? ''}
+        #{@_order_by?.to_sql() ? ''}
         #{@_limit?.to_sql() ? ''}
       ".trim()
-      @getargs @_where?.getargs(), @_orderby?.getargs(), @_limit?.getargs()
+      @getargs @_where?.getargs(), @_order_by?.getargs(), @_limit?.getargs()
     ]
 
   to_insert_sql: ->
@@ -84,8 +84,8 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     @_limit = if limit? then new Limit limit, offset
     @
 
-  orderby: (column) ->
-    @_orderby = if column? then new Orderby column
+  order_by: (column) ->
+    @_order_by = if column? then new Orderby column
     @
 
   select: ->

@@ -5,7 +5,7 @@ Mixed = require "../src/mixed"
 Schema = Mixed { database, cache }
 
 User = Schema
-  tablename: "user"
+  table_name: "user"
 
   fields: [
     { column: "id", type: "int", pk: yes, auto: yes }
@@ -43,10 +43,10 @@ User.all()
   User.count()
 .then (count) ->
   # console.log count
-  User.find age: { op: "gte", value: 5 }, { limit: 3, orderby: { column: "id", order: "desc" }, page: 2 }
+  User.find age: { op: "gte", value: 5 }, { limit: 3, order_by: { column: "id", order: "desc" }, page: 2 }
 .then (models) ->
   # console.log models
-  User.findone age: { op: "gte", value: 5 }
+  User.find_one age: { op: "gte", value: 5 }
 .then (model) ->
   # console.log model
   User.find_with_count age: { op: "gte", value: 5 }

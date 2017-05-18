@@ -21,8 +21,8 @@ class Schema
       callback = options
       options = {}
 
-    { orderby, json, limit, page } = options = lo.assign
-      orderby: if @$table.fields.id? then column: "id", order: "desc"
+    { order_by, json, limit, page } = options = lo.assign
+      order_by: if @$table.fields.id? then column: "id", order: "desc"
       json: no
       limit: 20
       page: 1
@@ -33,12 +33,12 @@ class Schema
     new Query @
     .select()
     .where condition
-    .orderby orderby
+    .order_by order_by
     .limit limit, offset
     .execute { json }, callback
     .then (objects) => @wrap objects, options
 
-  @findone: (condition, options, callback) ->
+  @find_one: (condition, options, callback) ->
     if typeof options is "function"
       callback = options
       options = {}
@@ -76,11 +76,11 @@ class Schema
     .then ([model]) -> model
 
   @find_by_ids: (ids, options, callback) ->
-    return Promise.reject new Error "First argument to find_by_ids must be an garray of id" unless lo.isArray ids
+    return Promise.reject new Error "First argument to find_by_ids must be an array of id" unless lo.isArray ids
     return Promise.resolve [] if lo.isEmpty ids
 
     keys = new Map
-    keys.set id, @cache_key id for id in ids#then [id, @cache_key id]
+    keys.set id, @cache_key id for id in ids
     # 先从缓存读
     @$cache.get Array.from keys.values()
     .then (objects = {}) =>
@@ -111,7 +111,7 @@ class Schema
       else
         return Promise.reject new Error "Invalid id arguments"
 
-    @findone condition, options
+    @find_one condition, options
     .then (model) =>
       # 缓存 raw object
       model and @$cache.set key, model.to_json(yes), 0
