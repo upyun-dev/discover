@@ -1,17 +1,17 @@
-### Dependencies Services
-
-+ mysqld
-+ memcached
-
-# [WIP] Discover v0.5.x Documents
+# Discover v0.5.x Documents
 
 Discover 是一个 Node.js 平台上的 Mysql ORM.
 
 需要 CoffeeScript v0.12.x 编译源码, 依赖 Node.js ≥ v6.x 版本.
 
+# Dependencies Services
+
++ mysqld
++ memcached
+
 # 设计概要
 
-discover 内部代码复杂凌乱, 结构高度耦合, 许多概念和函数调用杂糅在一起, 公有 API 用起来也比较复杂, 时常懵逼. 此外, Discover 缺乏完善的文档, 准确说是一点文档没有, 使用上完全要参照其他项目的用法, 并且配置参数也不知道有哪些.
+Discover 内部代码复杂凌乱, 结构高度耦合, 许多概念和函数调用杂糅在一起, 公有 API 用起来也比较复杂, 时常懵逼. 此外, Discover 缺乏完善的文档, 准确说是一点文档没有, 使用上完全要参照其他项目的用法, 并且配置参数也不知道有哪些.
 
 这对其他开发者造成很大的阅读/理解压力, 甚至连维护者也难以弄清楚哪些接口该怎么用, 后续也不易持续维护.
 
@@ -53,11 +53,54 @@ user_james = new User(attributes)
 
 #### database_config
 
+参见  https://github.com/mysqljs/mysql connection options
+
 #### cache_config
+
+```coffee
+{
+	servers: 参见 https://github.com/3rd-Eden/memcached 的 server location
+	options: 参见 https://github.com/3rd-Eden/memcached 的 options
+}
+```
 
 #### schema_pattern
 
+schema_pattern 用于配置一个 Schema
+
+```coffee
+{
+	table_name: "mysql 表名字" # String
+	fields: [ # Array
+		{
+			column: "列名"
+			pk: Boolean # 是否是主键, 可选
+			auto: Boolean # 是否是, 可选
+			secret: Boolean # 是否是保密字段, 可选
+			unique: Boolean # 是否是唯一的, 可选
+			type: "值的类型"
+			default: # 默认值, 可选
+		}
+		...
+	]
+	indices: [ # 可选 Array
+		# 配置同 fields
+	]
+	[custom_method] # 可以配置自定义方法
+}
+```
+
 #### attributes
+
+attributes 用于生成一个数据模型, 填充 Schema 中对应的 column.
+
+```coffee
+{
+	column_a: value_a
+	column_b: value_b
+	...
+}
+```
 
 ## DataBase
 `DataBase` 类里直接操作 mysql driver, 通过它实现资源的池化, 连接的创建, 销毁; 以及执行 SQL 语句.
@@ -198,7 +241,7 @@ User.find_and_delete { name: "Kafka" }
 
 # 查询
 User.find { name: "Kafka" }
-User.findone { name: "Kafka" }
+User.find_one { name: "Kafka" }
 User.find_by_xxx...
 ```
 
@@ -211,7 +254,7 @@ User.find_by_xxx...
 + `all([options])`: {Promise}
 + `count(condition: Object, [options])`: {Promise}
 + `find(condition: Object, [options])`: {Promise}
-+ `findone(condition: Object, [options])`: {Promise}
++ `find_one(condition: Object, [options])`: {Promise}
 + `find_with_count(condition: Object, [options])`: {Promise}
 + `find_by_index(index_name, value, [options])`: {Promise}
 + `find_by_unique_key(key, value, [options])`: {Promise}
@@ -223,9 +266,9 @@ User.find_by_xxx...
 + `find_by_ids(ids: Array(Object), [options])`: {Promise}
 + `find_and_update(condition: Object, modified: Object, [options])`: {Promise}
 + `find_and_delete(condition: Object, [options])`: {Promise}
-+ `insert(model: Model)`: {Promise}
-+ `update(model: Model)`: {Promise}
-+ `delete(model: Model)`: {Promise}
++ `insert(model: Model)`: {Promise}, resolve 函数的参数为当前模型
++ `update(model: Model)`: {Promise}, resolve 函数的参数为一个二元数组, 分别为修改之前的属性集合 oldstates 和当前模型
++ `delete(model: Model)`: {Promise}, resolve 函数的参数为一个二元数组, 分别为修改之前的属性集合 oldstates 和当前模型
 + `before(method_name: String, exec: Function)`: {Mixed}
 + `after(method_name: String, exec: Function)`: {Mixed}
 
@@ -248,76 +291,84 @@ User.find_by_xxx...
 
 #### options
 
+用于配置查询
+
+```coffee
+{
+	order_by: { column: String, order: "asc" | "desc" } # 依据哪个列按什么顺序排序, 可选
+	limit: Number # 返回数量限制, 可选
+	page: Number # 第几页, 可选
+}
+```
+
 #### id
 
-#### condition
+id 有三种类型:
 
-### hooks
+String: 当一个 Schema 中只有一个 pk 时, 这个值就作为 pk 传入.
+Array(String): 当有多于一个 pk 时, 这组值按照 pks 定义的顺序依次映射.
+Object: key-value 分别为 pk和值
+
+#### condition
+(见后文 **查询语法**)
+
+###  Hooks
+
+Discover 允许在 Schema 上定义它数据模型的钩子函数, 他们将在插入, 更新或者删除前后依次执行.
 
 #### Before Hook
-```js
-Model.before('insert', function(done) {
-  // `this` => the Model instance
-  console.info('before insert operation');
-  // must be called when the current task done !
-  done(err);
-});
+```coffee
+Schema.before 'insert', (done) ->
+  # `this` => 引用了当前操作的模型
+  # 当这个 hook 结束时需要调用 done
+  done(err)
 ```
 
-#### Three Different After Hooks
-```js
-// insert
-Model.after('insert', function(new_model, done) {
-  // `this` => the Model instance
-  console.info('after delete operation');
-  // must be called when the current task done !
-  done(err);
-});
+#### After Hooks
+```coffee
+# insert
+Schema.after 'insert', (model, done) ->
+  # `this` => 引用了当前操作的模型
+  # 当这个 hook 结束时需要调用 done
+  done(err)
 
-// update
-Model.after('update', function(oldstates, new_model, done) {
-  // `this` => the Model instance
-  console.info('after delete operation');
-  // must be called when the current task done !
-  done(err);
-});
+# update
+Schema.after 'update', (oldstates, new_model, done) ->
+  # `this` => 引用了当前操作的模型
+  # 当这个 hook 结束时需要调用 done
+  done(err)
 
-// delete
-Model.after('delete', function(oldstates, done) {
-  // `this` => the Model instance
-  console.info('after delete operation');
-  // must be called when the current task done !
-  done(err);
-});
+# delete
+Schema.after 'delete', (oldstates, done) ->
+  # `this` => 引用了当前操作的模型
+  # 当这个 hook 结束时需要调用 done
+  done(err)
 ```
 
-*note 1: we now only permit defining hooks on method `insert`, `update`, `delete`.*
-
-*note 2: hooks and the hooked method will suspend when the former failed.*
-
-*note 3: all tasks execute in series in the order of how they defined before.*
-
+_注1: 只允许对 `insert`, `update`, `delete` 三个方法设置 hooks_
+_注2: hooks 和被 hook 的方法如果出现错误, 那么后续的任务就会挂起_
+_注3: 所有的任务按照它们定义的顺序依次执行_
 
 ### validation
 
-to do validations, you need some **"validate"** prefix methods defined on model instance.
+Discover 支持数据域的修改校验, 你可以通过在 `schema_pattern` 中自定义方法或者直接在模型上添加**"validate"** 前缀方法来实现.
 
-validations method will be invoked before `insert` and `update` (in fact, after all hook-functions and before the real insert/update operation) automaticly only if they had been predefined.
+所有的校验程序会在 insert 和 update 调用前执行 (实际上, 是在所有的钩子函数之后, insert/update 方法之前).
 
-for example:
-```js
-model.validateFields = function(callback) {
-  if (valid)
-    callback(null);
+定义一个校验方法:
+
+```coffee
+user.validateFields = (callback) ->
+  if valid
+    callback null
   else
-    callback(new Error('balabala'));
+    callback new Error 'balabala'
 };
 ```
 
-then, `validateFields` will be executed automaticly when invoking either '`insert`' or '`update`'.
+之后, `validateFields` 会在调用 insert 或 update 时自动执行.
 
-+ *note: to do validations automaticly, be sure they belong to the `prototype` of the Model*
-+ *note: the validation methods will auto-execute **in the order of how they defined***
+校验方法会按照它们定义的顺序依次调用.
 
 # model API
 
@@ -356,10 +407,6 @@ model = new Model(attributes)
 + `is_changed([attr: String])`: {Boolean}
 + `changed_attributes([current_attrs: Object])`: {Object}
 + `previous([attr: String])`: {value}
-
-#### 参数
-
-##### attrs
 
 ### Private
 
@@ -412,9 +459,50 @@ mixed_model = new Mixed(attributes)
 
 其实 `Schema` 类和 `Model` 类都属于内部类, 这里只是为了阐述 `Mixed` 模型才将它们单独提出来讲. 它们两个的 API 已经是经过 Mix 的, 因此在 `Mixed` 类及其实例中均可直接使用.
 
-# 查询语法
+# 查询语法(OOQ)
 
-discover 自从 v0.3 起支持了 `ooq` 查询语法, 类似 mongodb 的 JSON 查询 DSL. 可以通过 `Schema` 类的 `find_*` 方法传入.
+discover 自从 v0.3 起支持了 `ooq` 查询语法, 类似 mongodb 的 JSON 查询 DSL. 可以通过 `Schema` 类的 `find_*` 方法传入, 例如:
+
+```coffee
+User.find {
+	name: "nerd"
+	$or :
+		age: { op: "gt", value: 19 }
+		hobbies:
+			$and: ["gaming", "programming"]
+}
+```
+
+这会将查询条件翻译成 SQL 语句:
+
+```sql
+WHERE name = nerd AND (age > 19 OR (hobbies = "gaming" AND hobbies = "programming"))
+```
+
+## 逻辑操作符
+
+`$and` / `$or` / `$not` / `$xor`
+
+qengine 默认在 ooq 最外层封装一个 `$and`, 因为它需要从一个逻辑运算符节点开始分析.
+
+逻辑运算符的**值**可以是一个 JSON 对象, 表示不同 columns 及子逻辑节点之间的逻辑关系.
+值也可以是一个数组, 这时, 这个逻辑运算符的父节点或祖先节点, 其中必须能向上追溯到一个 column, 这时表示对于同一个 column, 它可能的值之间的逻辑关系.
+
+## 关系运算符
+
+`gt` / `gte` / `eq` / `lt` / `lte` / `neq` / `like` / `isNull` / `isNotNull`
+
+关系运算符一般用于 ooq 语法树的末端叶节点. 表示一个 column 的值的条件.
+
+应用 `eq` 运算符的 column 可以简写:
+
+```coffee
+column_a: { op: "eq", value: "dust" }
+# 等价于
+column_a: "dust" 
+```
+
+`qengine` 库作为 Discover 的子模块实现了ooq-lang 的翻译过程, 规范及更多细节参见: https://github.com/upyun-dev/qengine
 
 # Breaking changes to be reminded when upgrading to v0.5.x
 
@@ -427,15 +515,3 @@ discover 自从 v0.3 起支持了 `ooq` 查询语法, 类似 mongodb 的 JSON �
 + orderBy -> order_by({column, order})
 +  Schema.update 和 Schema.delete 返回的 Promise 的 resolve 函数参数为**一个**二元数组, 包含旧模型的 attributes, 以及新的模型, 而不是之前包含**两个**参数.
 + 引用内部类的方法也有所差异, 参看 **类与模块** 一章的第一节.
-
-## Internal
-
-WIP
-
-### ooq
-
-WIP
-
-## other mechanism
-
-WIP
