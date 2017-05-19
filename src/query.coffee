@@ -2,12 +2,6 @@ ooq = require "ooq"
 lo = require "lodash"
 operators_ffi = require "./operator"
 
-# class AGAIN extends Error
-#   constructor: (message) ->
-#     super message
-#     @name = @constructor.name
-    # Error.captureStackTrace @, @constructor
-
 # new Query User
 
 # .select()
@@ -77,7 +71,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   getargs: (args...) -> lo(args).compact().flattenDeep().value()
 
-  execute: (options) ->
+  execute: ->
     @schema.$database.query @to_sql()...
     .then (ret) => @["_#{@_query_type}"].convert_result ret
 
@@ -109,7 +103,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     @
 
   update: ->
-    @_update = new Update @schema#, attrs
+    @_update = new Update @schema
     @_query_type = "update"
     @
 
@@ -171,33 +165,11 @@ class Where
     { fields } = @schema.$table
     { tree } = new ooq.Parser @condition
     @node = (new ooq.SemanticAnalysis tree).query_code
-  # transform: (where) ->
-  #   unless lo.isArray where.filters
-  #     # 关系运算符的 column 属性解析为 table field
-  #     where.column = @schema.$table.fields[where.column]
-  #   else
-  #     for sub_where in where.filters
-  #       # if lo.isArray filter
-  #       #   @convert_filters filter
-  #       @transform sub_where
-  #       else if filter.filters?
-  #         filter.filters = @convert_filters filter.filters
-  #         filter
-  #       else
-  #         filter.column = @schema.$table.fields[filter.column].column
-  #         filter
+
   getargs: -> @node.getargs?() ? []
+
   to_sql: ->
     return "" unless @condition? and not lo.isEmpty @condition
-    # 只有逻辑运算符(AND,OR,NOT,XOR)包含 filters 属性
-    # if where.filters?
-    #   where.filters = @convert_filters where.filters
-    # # 关系运算符的 column 属性解析为 table field
-    # else
-    #   where.column = fields[where.column]
-
-    # @transform where
-
     "WHERE #{@node.to_sql()}"
 
 class Create

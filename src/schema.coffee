@@ -9,23 +9,16 @@ class Schema
     .create()
     .execute()
 
-  @all: (options, callback) -> @find {}, options
+  @all: (options = {}) ->
+    @find {}, options
 
-  @count: (condition, options, callback) ->
-    if typeof options is "function"
-      callback = options
-      options = {}
-
+  @count: (condition, options = {}) ->
     new Query @
     .count()
     .where condition
-    .execute options, callback
+    .execute()
 
-  @find: (condition, options, callback) ->
-    if typeof options is "function"
-      callback = options
-      options = {}
-
+  @find: (condition, options = {}) ->
     { order_by, json, limit, page } = options = lo.assign
       order_by: if @$table.fields.id? then column: "id", order: "desc"
       json: no
@@ -40,52 +33,44 @@ class Schema
     .where condition
     .order_by order_by
     .limit limit, offset
-    .execute { json }, callback
+    .execute()
     .then (objects) => @wrap objects, options
 
-  @find_one: (condition, options, callback) ->
-    if typeof options is "function"
-      callback = options
-      options = {}
-
-    options = lo.assign json: no, options, limit: 1
+  @find_one: (condition, options = {}) ->
+    options = lo.assign options, limit: 1
 
     @find condition, options
     .then ([model]) -> model
 
-  @find_with_count: (condition, options, callback) ->
-    if typeof options is "function"
-      callback = options
-      options = null
-
+  @find_with_count: (condition, options = {}) ->
     Promise.all [
       @find condition, options
       @count condition, options
     ]
     .then ([models, total]) -> { models, total }
-    # .catch callback
 
-  @find_by_index: (index, value, options, callback) ->
+  @find_by_index: (index, value, options = {}) ->
     new Query @
     .select()
     .where "#{index}": value
-    .execute options, callback
+    .execute()
     .then (objects) => @wrap objects, options
 
-  @find_by_unique_key: (key, value, options, callback) ->
-    @find_by_index key, value, options, (err, entities) -> callback err, entities?[0]
+  @find_by_unique_key: (key, value, options = {}) ->
+    @find_by_index key, value, options
     .then ([model]) -> model
 
-  @find_by_id: (id, options, callback) ->
+  @find_by_id: (id, options = {}) ->
     @find_by_ids [id], options
     .then ([model]) -> model
 
-  @find_by_ids: (ids, options, callback) ->
+  @find_by_ids: (ids, options = {}) ->
     return Promise.reject new Error "First argument to find_by_ids must be an array of id" unless lo.isArray ids
     return Promise.resolve [] if lo.isEmpty ids
 
     keys = new Map
     keys.set id, @cache_key id for id in ids
+
     # 先从缓存读
     @$cache.get Array.from keys.values()
     .then (objects = {}) =>
@@ -94,9 +79,9 @@ class Schema
 
       Promise.all missed_redo
       .then (models) -> model for model in models when model?
-      .then (models) => [models..., (@wrap objects, options)...]
+      .then (models) => [models..., (@wrap objects)...]
 
-  @wrap: (objects, options) ->
+  @wrap: (objects) ->
     for key, object of objects
       model = @to_model object
       if model and options?.json then model.to_json options.secure else model
@@ -123,23 +108,22 @@ class Schema
       # 返回 model
       model
 
-  @find_and_update: (condition, modified, options, callback) ->
+  @find_and_update: (condition, modified, options = {}) ->
     new Query @
     .update()
     .set modified
     .where condition
-    .execute options, callback
+    .execute()
 
-  @find_and_delete: (condition, options, callback) ->
+  @find_and_delete: (condition, options = {}) ->
     new Query @
     .delete()
     .where condition
-    .execute options, callback
+    .execute()
 
-  @insert: (model, callback) ->
+  @insert: (model) ->
     unless model.$schema?
       return Promise.reject new Error "Can not insert non-model object"
-      # return this
 
     { insert: before_hooks = [] } = @_before_hooks
     { insert: after_hooks = [] } = @_after_hooks
@@ -165,7 +149,7 @@ class Schema
       done null, @
     .catch (err) -> done err
 
-  @update: (model, callback) ->
+  @update: (model) ->
     unless model.$schema?
       return Promise.reject new Error "Can not insert non-model object"
 
@@ -195,7 +179,7 @@ class Schema
       done null, oldstates, @
     .catch (err) -> done err
 
-  @delete: (model, callback) ->
+  @delete: (model) ->
     unless model.$schema?
       return Promise.reject new Error "Can not insert non-model object"
 

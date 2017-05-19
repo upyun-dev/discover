@@ -9,13 +9,24 @@ Discover 是一个 Node.js 平台上的 Mysql ORM.
 + mysqld
 + memcached
 
-# 设计概要
+# What's news in v0.5.x
 
-Discover 内部代码复杂凌乱, 结构高度耦合, 许多概念和函数调用杂糅在一起, 公有 API 用起来也比较复杂, 时常懵逼. 此外, Discover 缺乏完善的文档, 准确说是一点文档没有, 使用上完全要参照其他项目的用法, 并且配置参数也不知道有哪些.
+## Schema
 
-这对其他开发者造成很大的阅读/理解压力, 甚至连维护者也难以弄清楚哪些接口该怎么用, 后续也不易持续维护.
++ 增加 `persist()` 方法
++ 增加 `find_and_update()`, `find_and_delete()` 方法
++ 增加 `to_model()` 方法
 
-第一次重构并没有什么本质的改善, 仅仅是朝着模块化方向走了几步. 基于以上, 有了这次重写的目的: 清晰的代码层次与架构, 松耦合, 更多的功能, 更语义化更便捷的接口调用, 清理冗余逻辑, 修复历史遗留问题, 重新定义内部概念...
+# Breaking changes to be reminded when upgrading to v0.5.x
+
++ 异步 API 全部返回 Promise, 不再支持 callback (除了 hook  functions 之外).
++ 创建模型 schema 的方法变为 `create_schema`
++ name 作为 column 的符号链接
++ 驼峰命名 -> 蛇形命名
++ schema_pattern 中的 `tableName` 属性名变为 `table_name`
++ `find_*` 方法中的可选参数 `options` 中的 `order_by` 值从 `column` 变为 `{ column, order }`.
++  `Schema.update` 和 `Schema.delete` 返回的 Promise 的 resolve 函数参数为 **一个** 二元数组, 包含旧模型的 attributes, 以及新的模型, 而不是之前包含 **两个** 参数.
++ 引用内部类的方法也有所差异, 参看 **类与模块** 一章的第一节.
 
 # 类与模块
 
@@ -35,7 +46,7 @@ discover = new Discover(database_config, [cache_config])
 User = discover.create_schema(schema_pattern)
 ```
 
-随后调用`create_schema` 方法创建一个**新的** `Mixed` 类, 它就是一个 schema, 我们将用它来创建数据模型. 如上所示, 创建了一个 `User` schema.
+随后调用`create_schema` 方法创建一个 **新的** `Mixed` 类, 它就是一个 schema, 我们将用它来创建数据模型. 如上所示, 创建了一个 `User` schema.
 
 ```coffee
 user_james = new User(attributes)
@@ -89,10 +100,7 @@ schema_pattern 用于配置一个 Schema
     # 配置同 fields
   ]
 
-  [custom_method]: -> # 可以配置自定义方法
-
-  validate:
-    error: ->
+  [custom_method_name]: -> # 可以配置自定义方法
 }
 ```
 
@@ -580,15 +588,3 @@ column_a: "dust"
 ```
 
 `qengine` 库作为 Discover 的子模块实现了ooq-lang 的翻译过程, 规范及更多细节参见: https://github.com/upyun-dev/qengine
-
-# Breaking changes to be reminded when upgrading to v0.5.x
-
-+ 异步 API 全部返回 Promise, 不再支持 callback (除了 hook  functions 之外).
-+ Schema 上添加 `find_and_update`以及`find_and_delete`方法.
-+ 创建模型 schema 的方法变为 `create_schema`
-+ tableName -> table_name
-+ name 作为 column 的符号链接
-+ 驼峰命名 -> 蛇形命名
-+ orderBy -> order_by({column, order})
-+  Schema.update 和 Schema.delete 返回的 Promise 的 resolve 函数参数为**一个**二元数组, 包含旧模型的 attributes, 以及新的模型, 而不是之前包含**两个**参数.
-+ 引用内部类的方法也有所差异, 参看 **类与模块** 一章的第一节.
