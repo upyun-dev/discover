@@ -51,7 +51,7 @@ class Model extends EventEmitter
     return @ if lo.isEmpty new_attrs
 
     # 检查修改是否合法
-    return no unless options.silent or not @validate or @_perform_validate new_attrs, options
+    # return no unless options.silent or @_perform_validate new_attrs, options
 
     changing = @_changing
     @_changing = yes
@@ -72,7 +72,7 @@ class Model extends EventEmitter
 
   # If a specific `error` callback has been passed, call that instead of firing the general `'error'` event.
   _perform_validate: (attrs, options = {}) ->
-    error = @validate attrs
+    error = @validate? attrs
     return yes unless error
 
     if lo.isFunction options.error

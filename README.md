@@ -59,8 +59,8 @@ user_james = new User(attributes)
 
 ```coffee
 {
-	servers: 参见 https://github.com/3rd-Eden/memcached 的 server location
-	options: 参见 https://github.com/3rd-Eden/memcached 的 options
+  servers: 参见 https://github.com/3rd-Eden/memcached 的 server location
+  options: 参见 https://github.com/3rd-Eden/memcached 的 options
 }
 ```
 
@@ -70,23 +70,29 @@ schema_pattern 用于配置一个 Schema
 
 ```coffee
 {
-	table_name: "mysql 表名字" # String
-	fields: [ # Array
-		{
-			column: "列名"
-			pk: Boolean # 是否是主键, 可选
-			auto: Boolean # 是否是, 可选
-			secret: Boolean # 是否是保密字段, 可选
-			unique: Boolean # 是否是唯一的, 可选
-			type: "值的类型"
-			default: # 默认值, 可选
-		}
-		...
-	]
-	indices: [ # 可选 Array
-		# 配置同 fields
-	]
-	[custom_method] # 可以配置自定义方法
+  table_name: "mysql 表名字" # String
+
+  fields: [ # Array
+    {
+      column: "列名"
+      pk: Boolean # 是否是主键, 可选
+      auto: Boolean # 是否是, 可选
+      secret: Boolean # 是否是保密字段, 可选
+      unique: Boolean # 是否是唯一的, 可选
+      type: "值的类型"
+      default: # 默认值, 可选
+    }
+    ...
+  ]
+
+  indices: [ # 可选 Array
+    # 配置同 fields
+  ]
+
+  [custom_method]: -> # 可以配置自定义方法
+
+  validate:
+    error: ->
 }
 ```
 
@@ -96,9 +102,9 @@ attributes 用于生成一个数据模型, 填充 Schema 中对应的 column.
 
 ```coffee
 {
-	column_a: value_a
-	column_b: value_b
-	...
+  column_a: value_a
+  column_b: value_b
+  ...
 }
 ```
 
@@ -319,11 +325,11 @@ User.all()
 
 ## 类方法
 
-+ `all([options])`: {Promise}
-+ `count(condition: Object, [options])`: {Promise}
-+ `find(condition: Object, [options])`: {Promise}
++ `all([options])`: {Promise} 获取所有模型
++ `count(condition: Object, [options])`: {Promise} 获取符合条件的模型数量
++ `find(condition: Object, [options])`: {Promise} 标准的查找方法
 + `find_one(condition: Object, [options])`: {Promise}
-+ `find_with_count(condition: Object, [options])`: {Promise}
++ `find_with_count(condition: Object, [options])`: {Promise} 同时返回模型及数量
 + `find_by_index(index_name, value, [options])`: {Promise}
 + `find_by_unique_key(key, value, [options])`: {Promise}
 + `find_by_id(id: String, [options])`: {Promise}
@@ -363,9 +369,9 @@ User.all()
 
 ```coffee
 {
-	order_by: { column: String, order: "asc" | "desc" } # 依据哪个列按什么顺序排序, 可选
-	limit: Number # 返回数量限制, 可选
-	page: Number # 第几页, 可选
+  order_by: { column: String, order: "asc" | "desc" } # 依据哪个列按什么顺序排序, 可选
+  limit: Number # 返回数量限制, 可选
+  page: Number # 第几页, 可选
 }
 ```
 
@@ -533,11 +539,11 @@ discover 自从 v0.3 起支持了 `ooq` 查询语法, 类似 mongodb 的 JSON �
 
 ```coffee
 User.find {
-	name: "nerd"
-	$or :
-		age: { op: "gt", value: 19 }
-		hobbies:
-			$and: ["gaming", "programming"]
+  name: "nerd"
+  $or :
+    age: { op: "gt", value: 19 }
+    hobbies:
+      $and: ["gaming", "programming"]
 }
 ```
 
