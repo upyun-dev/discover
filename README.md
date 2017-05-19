@@ -259,7 +259,9 @@ User = discover.create_schema
 # 创建 User Model
 user = new User name: "kafka", age: 10, comments: ["good", "bad", "foo", "bar"], remark: 0.98, last_login: new Date()
 
-User.all()
+User.persist()
+.then ->
+  User.all()
 .then (models) ->
   # console.log models.length
   User.count()
@@ -325,6 +327,7 @@ User.all()
 
 ## 类方法
 
++ `persist()`: {Promise} 在数据库中创建 Schema 对应的表
 + `all([options])`: {Promise} 获取所有模型
 + `count(condition: Object, [options])`: {Promise} 获取符合条件的模型数量
 + `find(condition: Object, [options])`: {Promise} 标准的查找方法

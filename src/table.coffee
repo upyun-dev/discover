@@ -26,14 +26,5 @@ class Table # metadata: table
       @defaults[column] = default_value ? field.default_value?()
 
   box: (field) -> new (Type[field.type] ? Type.raw) field
-  # ensure: (database) ->
-  #   cols = ("`#{column}` #{type} #{if auto? then 'AUTO_INCREMENT' else ''}" for column, { type, auto } of @fields).join ","
-  #   pks = ("PRIMARY KEY (`#{column}`)" for { column } in @pks).join ","
-
-  #   sql = """
-  #     CREATE TABLE `#{@name}` (#{cols}, #{pks})
-  #   """
-  #   console.log sql
-  #   database.query sql, []
 
 module.exports = Table

@@ -4,6 +4,11 @@ Query = require "./query"
 { createHash } = require "crypto"
 
 class Schema
+  @persist: ->
+    new Query @
+    .create()
+    .execute()
+
   @all: (options, callback) -> @find {}, options
 
   @count: (condition, options, callback) ->
@@ -144,7 +149,7 @@ class Schema
 
     new Promise (resolve, reject) ->
       async.waterfall tasks, (err) ->
-        err and throw err
+        err and reject err
         resolve model.reset()
 
   # bind for model
@@ -172,7 +177,7 @@ class Schema
 
     new Promise (resolve, reject) ->
       async.waterfall tasks, (err, oldstates) ->
-        err and throw err
+        err and reject err
         resolve [oldstates, model.reset()]
 
   # bind for model
@@ -201,7 +206,7 @@ class Schema
 
     new Promise (resolve, reject) ->
       async.waterfall tasks, (err) ->
-        err and throw err
+        err and reject err
         resolve model.reset()
 
   # bind for model

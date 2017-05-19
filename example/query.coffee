@@ -16,9 +16,9 @@ class Schema
   @$database: database
   @$table: table
 
-(new Query Schema).select().where({ name: { op: "like", value: "kafka" } }).limit(2, 1).order_by({ column: "id", order: 'desc'}).execute()
-.then (rets) -> console.log rets
-.catch (err) -> console.error err
+# (new Query Schema).select().where({ name: { op: "like", value: "kafka" } }).limit(2, 1).order_by({ column: "id", order: 'desc'}).execute()
+# .then (rets) -> console.log rets
+# .catch (err) -> console.error err
 # console.log (new Query Schema).select().where({}).to_sql()
 # console.log (new Query Schema).select().where({ id: 1, col: { op: "like", value: "sss" } }).order_by("id").limit(5, 10).to_sql()
 # console.log (new Query Schema).select().where({ id: 1, col: { op: "like", value: "sss" } }).order_by({ column: "id", order: 'desc'}).limit(10).to_sql()
@@ -43,3 +43,6 @@ class Schema
 # (new Query Schema).delete().where({ id: 1 }).execute()
 # .then ({ deletes }) -> console.log deletes
 # .catch (err) -> console.error err
+(new Query Schema).create().execute()
+.then (ret) -> console.log ret
+.catch (err) -> console.error err

@@ -30,6 +30,12 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   to_sql: -> @["to_#{@_query_type}_sql"]()
 
+  to_create_sql: ->
+    [
+      "#{@_create.to_sql()}".trim()
+      @getargs()
+    ]
+
   to_select_sql: ->
     [
       "
@@ -86,6 +92,11 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   order_by: (column) ->
     @_order_by = if column? then new Orderby column
+    @
+
+  create: ->
+    @_create = new Create @schema
+    @_query_type = "create"
     @
 
   select: ->
@@ -189,6 +200,19 @@ class Where
 
     "WHERE #{@node.to_sql()}"
 
+class Create
+  constructor: (@schema) ->
+  convert_result: -> yes
+  to_sql: ->
+    { pks, fields, name } = @schema.$table
+    cols = ("`#{column}` #{data_type}#{if auto? then ' AUTO_INCREMENT' else ''}" for column, { data_type, auto } of fields).join ", "
+
+    pks_sql = if lo.isEmpty pks then "" else ", PRIMARY KEY (#{("`#{column}`" for column in pks).join ', '})"
+
+    """
+      CREATE TABLE `#{name}` (#{cols} #{pks_sql})
+    """
+
 class Select
   constructor: (@schema) ->
 
@@ -264,7 +288,7 @@ class Orderby
 
 class Update
   constructor: (@schema) ->
-  convert_result: ({ changedRows }, callback) -> updates: changedRows
+  convert_result: ({ changedRows }) -> updates: changedRows
 
   to_sql: ->
     { name } = @schema.$table

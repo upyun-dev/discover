@@ -27,10 +27,10 @@ class DataBase
 
     new Promise (resolve, reject) =>
       pool.getConnection (err, conn) =>
-        err and throw err
+        err and reject err
         conn.query sql, values, (err, args...) ->
           conn.release()
-          err and throw err
+          err and reject err
           resolve args...
 
   next_sequence: (name) ->
