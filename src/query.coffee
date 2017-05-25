@@ -5,11 +5,11 @@ operators_ffi = require "./operator"
 # new Query User
 
 # .select()
-# .select().where(condition).limit(count, offset).order_by(column)
-# .id().where(condition).limit(count, offset).order_by(column)
-# .max().where(condition).limit(count, offset).order_by(column)
-# .sum().where(condition).limit(count, offset).order_by(column)
-# .count().where(condition).limit(count, offset).order_by(column)
+# .select().where(condition).limit(count, offset).order_by(column, [order])
+# .id().where(condition).limit(count, offset).order_by(column, [order])
+# .max().where(condition).limit(count, offset).order_by(column, [order])
+# .sum().where(condition).limit(count, offset).order_by(column, [order])
+# .count().where(condition).limit(count, offset).order_by(column, [order])
 
 # .update().set(model)
 # .update().set(attrs).where(condition)
@@ -85,7 +85,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     @
 
   order_by: (column) ->
-    @_order_by = if column? then new Orderby column
+    @_order_by = if column? then new OrderBy column
     @
 
   create: ->
@@ -107,25 +107,25 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     @_query_type = "update"
     @
 
-  set: (entry) ->
-    attrs = entry.changed_attributes?() ? entry
+  set: (entity) ->
+    attrs = entity.changed_attributes?() ? entity
     @_set = new UpdateSet @schema, attrs
-    if entry instanceof @schema
+    if entity instanceof @schema
       # 如果传入 model, 则默认根据主键查询更新
       condition = {}
-      for key, value of entry.attributes when key in @schema.$table.pks
+      for key, value of entity.attributes when key in @schema.$table.pks
         condition[key] = value
       @where condition
     @
 
-  delete: (entry) ->
+  delete: (entity) ->
     @_delete = new Delete @schema
     @_query_type = "delete"
 
-    if entry instanceof @schema
+    if entity instanceof @schema
       # 如果传入 model, 则默认根据主键查询删除
       condition = {}
-      condition[key] = value for key, value of entry.attributes when key in @schema.$table.pks
+      condition[key] = value for key, value of entity.attributes when key in @schema.$table.pks
       @where condition
     @
 
@@ -176,13 +176,17 @@ class Create
   constructor: (@schema) ->
   convert_result: -> yes
   to_sql: ->
-    { pks, fields, name } = @schema.$table
-    cols = ("`#{column}` #{data_type}#{if auto? then ' AUTO_INCREMENT' else ''}" for column, { data_type, auto } of fields).join ", "
+    { fields, name } = @schema.$table
 
-    pks_sql = if lo.isEmpty pks then "" else ", PRIMARY KEY (#{("`#{column}`" for column in pks).join ', '})"
+    cols = for column, { data_type, auto, unique, pk } of fields
+      desc = [column, data_type]
+      desc.push "AUTO_INCREMENT" if auto
+      desc.push "UNIQUE" if unique
+      desc.push "PRIMARY KEY" if pk
+      desc.join " "
 
     """
-      CREATE TABLE `#{name}` (#{cols} #{pks_sql})
+      CREATE TABLE IF NOT EXISTS `#{name}` (#{cols.join ', '})
     """
 
 class Select
@@ -195,7 +199,6 @@ class Select
 
     "SELECT * FROM `#{name}`"
 
-  # TODO
   convert_result: (rows) ->
     { fields } = @schema.$table
     for row in rows ? []
@@ -244,16 +247,9 @@ class Limit
   to_sql: -> "LIMIT #{if @offset or @offset is 0 then '?, ?' else '?'}"
   getargs: -> if @offset or @offset is 0 then [@offset, @limit] else [@limit]
 
-class Orderby
-  constructor: (@column) ->
-    @order = "ASC"
-
-    # TODO
-    if lo.isObject @column
-      { @order, @column } = @column
-      # [column] = Object.keys @column
-      @order = @order.toUpperCase()
-      # @column = column
+class OrderBy
+  constructor: (@column, @order = "ASC") ->
+    @order = @order.toUpperCase()
 
   to_sql: -> "ORDER BY `#{@column}` #{@order}"
   getargs: -> []
