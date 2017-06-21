@@ -24,6 +24,6 @@ class Discover
   @Cache = Cache
   @Mix = init_schema
 
-  create_schema: (params) -> @mixed params
+  define_schema: (params) -> @mixed params
 
 module.exports = Discover

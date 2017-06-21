@@ -19,8 +19,8 @@ Discover 是一个 Node.js 平台上的 Mysql ORM.
 
 # Breaking changes to be reminded when upgrading to v0.5.x
 
-+ 异步 API 全部返回 Promise, 不再支持 callback (除了 hook  functions 之外).
-+ 创建模型 schema 的方法变为 `create_schema`
++ 异步 API 全部返回 Promise, 不再支持 callback (除了 hook  functions 之外).b
++ 创建模型 schema 的方法变为 `define_schema`
 + name 作为 column 的符号链接
 + 驼峰命名 -> 蛇形命名
 + schema_pattern 中的 `tableName` 属性名变为 `table_name`
@@ -43,10 +43,10 @@ discover = new Discover(database_config, [cache_config])
 最常规的用法就是像上面这样通过实例化一个 `Discover`, 绑定底层资源到这个 discover 实例上.
 
 ```coffee
-User = discover.create_schema(schema_pattern)
+User = discover.define_schema(schema_pattern)
 ```
 
-随后调用`create_schema` 方法创建一个 **新的** `Mixed` 类, 它就是一个 schema, 我们将用它来创建数据模型. 如上所示, 创建了一个 `User` schema.
+随后调用`define_schema` 方法创建一个 **新的** `Mixed` 类, 它就是一个 schema, 我们将用它来创建数据模型. 如上所示, 创建了一个 `User` schema.
 
 ```coffee
 user_james = new User(attributes)
@@ -245,7 +245,7 @@ cachecfg = servers: "127.0.0.1:11211"
 discover = new Discover dbcfg, cachecfg
 
 # 创建一个 User Schema
-User = discover.create_schema 
+User = discover.define_schema 
   table_name: "user"
 
   fields: [
@@ -501,7 +501,7 @@ model = new Model(attributes)
 # Mixed (混合模型) API
 
 ## 混合模型是什么?
-混合模型是由调用 `(new Discover db, cache).create_schema(schema_pattern)` 方法返回得来的, 它就是我们一般所讲的 Data Model (数据模型).
+混合模型是由调用 `(new Discover db, cache).define_schema(schema_pattern)` 方法返回得来的, 它就是我们一般所讲的 Data Model (数据模型).
 
 为何称做混合模型? 因为 `Mixed` 类本身并不具备什么数据操作能力, 它是通过扩展完善的自身: 继承了 `Model` 类, 混入了 `Schema` 类. 因此它具备了 `Schema` 的静态方法以及 `Model` 的实例方法.
 

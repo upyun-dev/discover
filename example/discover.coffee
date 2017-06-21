@@ -13,7 +13,7 @@ cachecfg = servers: "127.0.0.1:11211"
 discover = new Discover dbcfg, cachecfg
 
 # 创建一个 User Schema
-User = discover.create_schema 
+User = discover.define_schema 
   table_name: "user"
 
   fields: [
