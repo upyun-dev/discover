@@ -84,8 +84,8 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     @_limit = if limit? then new Limit limit, offset
     @
 
-  order_by: (column) ->
-    @_order_by = if column? then new OrderBy column
+  order_by: (columns) ->
+    @_order_by = if columns? then new OrderBy columns
     @
 
   create: ->
@@ -248,10 +248,28 @@ class Limit
   getargs: -> if @offset or @offset is 0 then [@offset, @limit] else [@limit]
 
 class OrderBy
-  constructor: (@column, @order = "ASC") ->
-    @order = @order.toUpperCase()
+  constructor: (columns) ->
+    @default_order = "DESC"
 
-  to_sql: -> "ORDER BY `#{@column}` #{@order}"
+    @columns = if lo.isArray columns
+      for item in columns
+        if lo.isObject item
+          ({ column, order: order } for column, order of item)[0]
+        else
+          column: item, order: @default_order
+    else if lo.isObject columns
+      { column, order: order } for column, order of columns
+    else
+      [
+        column: columns, order: @default_order
+      ]
+
+  to_sql: ->
+    "ORDER BY #{flatten().join ', '}"
+
+  flatten: ->
+    "#{column} #{order.toUpperCase()}" for { column, order } in @columns
+
   getargs: -> []
 
 class Update

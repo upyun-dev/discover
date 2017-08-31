@@ -20,7 +20,7 @@ class Schema
 
   @find: (condition, options = {}) ->
     { order_by, json, limit, page } = options = lo.assign
-      order_by: if @$table.fields.id? then column: "id", order: "desc"
+      order_by: if @$table.fields.id? then id: "desc"
       json: no
       limit: 20
       page: 1
