@@ -7,7 +7,7 @@ do ->
   r = await cache.set "m", {a: b: 3}, 0
   console.log r
   await cache.set "n", {a: 5}, 0
-  r = await cache.get ["m", "n"]
+  r = await cache.get "m"
   console.log r
   cache.del "m"
 

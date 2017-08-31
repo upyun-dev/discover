@@ -114,15 +114,13 @@ class Schema
     keys.set id, @cache_key id for id in ids
 
     # 先从缓存读
-    objects = await @$cache.get Array.from keys.values()
+    objects = await @$cache.get Array.from keys.values() or {}
     # 缓存失效从数据库中读
-    missed_redo = for [id, key] from keys when key not of objects then do (id, key) => @load id, key, options
+    missed_redo = for [id, key] from keys when key not of objects then @load id, key, options
+    models = for model in await Promise.all missed_redo when model? then model
+    [models..., (@wrap objects, options)...]
 
-    models = await Promise.all missed_redo
-    models = model for model in models when model?
-    [models..., (@wrap objects)...]
-
-  @wrap: (objects) ->
+  @wrap: (objects, options = {}) ->
     for key, object of objects
       model = @to_model object
       if model and options?.json then model.to_json options.secure else model

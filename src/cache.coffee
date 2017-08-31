@@ -8,7 +8,7 @@ class Cache
 
   init_cache: ({ servers, options = {} }) -> new Memcached servers, options
 
-  get: (key) -> await @inst?.async_get key ? []
+  get: (key) -> await @inst?.async_get key ? {}
 
   del: (key) -> await @inst?.async_del key
 
