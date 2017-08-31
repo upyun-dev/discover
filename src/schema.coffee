@@ -10,13 +10,56 @@ class Schema
     .execute()
 
   @all: (options = {}) ->
-    @find {}, options
+    try
+      await @find {}, options
+    catch err
+      throw @_rewrite_error err
 
   @count: (condition, options = {}) ->
+    try
+      await new Query @
+            .count()
+            .where condition
+            .execute()
+    catch err
+      throw @_rewrite_error err
+  
+  @_rewrite_error: (err) ->
+    if err?
+      err.message = "From table: [#{@$table.table_name}], #{err.message}"
+    err
+
+  @_prune: (condition) ->
+    enqueue = (queue, node) ->
+      unless lo.isArray node or node.op? or node.value?
+        queue.push { child_name, node } for child_name of node
+      queue
+
+    # 减掉不属于 Model 的字段
+    cut = (child_name, node) =>
+      if child_name.startWith "$" or @$table.fields[child_name]
+        no
+      else
+        delete node[child_name]
+        yes
+
+    queue = enqueue [], condition
+    # 广搜剪枝
+    until lo.isEmpty queue
+      { child_name, node } = queue.shift()
+      enqueue queue, node[child_name] unless cut child_name, node
+
+  @_create_query: (condition, options = {}) ->
+    @_prune condition if condition?
+
     new Query @
-    .count()
+    .select()
     .where condition
-    .execute()
+
+  @every: (condition, iterator, done, options = {}) ->
+    q = @_create_query condition
+    q.limit limit if options.limit?
+    q.iterate iterator, (err) -> done @_rewrite_error err
 
   @find: (condition, options = {}) ->
     { order_by, json, limit, page } = options = lo.assign
@@ -28,41 +71,40 @@ class Schema
 
     offset = (page - 1) * limit
 
-    new Query @
-    .select()
-    .where condition
-    .order_by order_by
-    .limit limit, offset
-    .execute()
-    .then (objects) => @wrap objects, options
+    try
+      objects = await @_create_query condition
+                      .order_by order_by
+                      .limit limit, offset
+                      .execute()
+      @wrap objects, options
+    catch err
+      throw @_rewrite_error err
 
   @find_one: (condition, options = {}) ->
     options = lo.assign options, limit: 1
+    [model] = await @find condition, options
 
-    @find condition, options
-    .then ([model]) -> model
+    model
 
   @find_with_count: (condition, options = {}) ->
-    Promise.all [
+    [models, total] = await Promise.all [
       @find condition, options
       @count condition, options
     ]
-    .then ([models, total]) -> { models, total }
+
+    { models, total }
 
   @find_by_index: (index, value, options = {}) ->
-    new Query @
-    .select()
-    .where "#{index}": value
-    .execute()
-    .then (objects) => @wrap objects, options
+    objects = await @_create_query("#{index}": value).execute()
+    @wrap objects, options
 
   @find_by_unique_key: (key, value, options = {}) ->
-    @find_by_index key, value, options
-    .then ([model]) -> model
+    [model] = await @find_by_index key, value, options
+    model
 
   @find_by_id: (id, options = {}) ->
-    @find_by_ids [id], options
-    .then ([model]) -> model
+    [model] = await @find_by_ids [id], options
+    model
 
   @find_by_ids: (ids, options = {}) ->
     return Promise.reject new Error "First argument to find_by_ids must be an array of id" unless lo.isArray ids
@@ -72,14 +114,13 @@ class Schema
     keys.set id, @cache_key id for id in ids
 
     # 先从缓存读
-    @$cache.get Array.from keys.values()
-    .then (objects = {}) =>
-      # 缓存失效从数据库中读
-      missed_redo = for [id, key] from keys when key not of objects then do (id, key) => @load id, key, options
+    objects = await @$cache.get Array.from keys.values()
+    # 缓存失效从数据库中读
+    missed_redo = for [id, key] from keys when key not of objects then do (id, key) => @load id, key, options
 
-      Promise.all missed_redo
-      .then (models) -> model for model in models when model?
-      .then (models) => [models..., (@wrap objects)...]
+    models = await Promise.all missed_redo
+    models = model for model in models when model?
+    [models..., (@wrap objects)...]
 
   @wrap: (objects) ->
     for key, object of objects
@@ -101,25 +142,30 @@ class Schema
       else
         return Promise.reject new Error "Invalid id arguments"
 
-    @find_one condition, options
-    .then (model) =>
-      # 缓存 raw object
-      model and @$cache.set key, model.to_json(yes), 0
-      # 返回 model
-      model
+    model = await @find_one condition, options
+    # 缓存 raw object
+    model and @$cache.set key, model.to_json(yes), 0
+    # 返回 model
+    model
 
   @find_and_update: (condition, modified, options = {}) ->
-    new Query @
-    .update()
-    .set modified
-    .where condition
-    .execute()
+    try
+      await new Query @
+            .update()
+            .set modified
+            .where condition
+            .execute()
+    catch err
+      throw @_rewrite_error err
 
   @find_and_delete: (condition, options = {}) ->
-    new Query @
-    .delete()
-    .where condition
-    .execute()
+    try
+      await new Query @
+            .delete()
+            .where condition
+            .execute()
+    catch err
+      throw @_rewrite_error err
 
   @insert: (model) ->
     unless model.$schema?
@@ -131,23 +177,23 @@ class Schema
     validation_tasks = @walk model, "validate"
     tasks = for task in [before_hooks..., validation_tasks..., @_insert.bind(model), after_hooks...] then task.bind model
 
-    new Promise (resolve, reject) ->
-      async.waterfall tasks, (err) ->
-        err and reject err
+    new Promise (resolve, reject) =>
+      async.waterfall tasks, (err) =>
+        err and reject @_rewrite_error err
         resolve model.reset()
 
   # bind for model
   @_insert: (done) ->
-    new Query @$schema
-    .insert()
-    .values @
-    .execute()
-    .then ({ id }) =>
+    try
+      { id } = await new Query @$schema
+              .insert()
+              .values @
+              .execute()
       @set @$schema.$table.auto, id, silent: yes if @$schema.$table.auto?
-      @$schema.clean_cache @
-    .then =>
+      await @$schema.clean_cache @
       done null, @
-    .catch (err) -> done err
+    catch err
+      done err
 
   @update: (model) ->
     unless model.$schema?
@@ -159,25 +205,24 @@ class Schema
     validation_tasks = @walk model, "validate"
     tasks = for task in [before_hooks..., validation_tasks..., @_update.bind(model), after_hooks...] then task.bind model
 
-    new Promise (resolve, reject) ->
-      async.waterfall tasks, (err, oldstates) ->
-        err and reject err
+    new Promise (resolve, reject) =>
+      async.waterfall tasks, (err, oldstates) =>
+        err and reject @_rewrite_error err
         resolve [oldstates, model.reset()]
 
   # bind for model
   @_update: (done) ->
     oldstates = @_oldstates
-
-    new Query @$schema
-    .update()
-    .set @
-    .execute()
-    .then ({ updates }) =>
+    try
+      { updates } = await new Query @$schema
+                    .update()
+                    .set @
+                    .execute()
       @_oldstates = @to_json yes
-      @$schema.clean_cache @
-    .then => 
+      await @$schema.clean_cache @
       done null, oldstates, @
-    .catch (err) -> done err
+    catch err
+      done err
 
   @delete: (model) ->
     unless model.$schema?
@@ -188,18 +233,20 @@ class Schema
 
     tasks = for task in [before_hooks..., @_delete.bind(model), after_hooks...] then task.bind model
 
-    new Promise (resolve, reject) ->
-      async.waterfall tasks, (err) ->
-        err and reject err
+    new Promise (resolve, reject) =>
+      async.waterfall tasks, (err) =>
+        err and reject @_rewrite_error err
         resolve model.reset()
 
   # bind for model
   @_delete: (done) ->
-    new Query @$schema
-    .delete @
-    .execute()
-    .then ({ deletes }) => done null, @
-    .catch (err) -> done err
+    try
+      { deletes } = await new Query @$schema
+                    .delete @
+                    .execute()
+      done null, @
+    catch err
+      done err
 
   @before: (method_name, exec) ->
     if @is_valid method_name
@@ -216,7 +263,7 @@ class Schema
   # 返回 validation 任务队列
   @walk: (model, prefix) ->
     for own method_name, method of model when lo.isFunction method and method_name.match /^validate.+/
-      do (method_name) -> (done) -> model[method_name] (err) -> done err
+      do (method_name) -> (done) -> model[method_name] done
 
   # 检查方法是否允许被添加 hook
   @is_valid: (method) -> ["insert", "update", "delete"].includes method

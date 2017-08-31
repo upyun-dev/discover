@@ -72,13 +72,23 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
   getargs: (args...) -> lo(args).compact().flattenDeep().value()
 
   execute: ->
-    @schema.$database.query @to_sql()...
-    .then (ret) => @["_#{@_query_type}"].convert_result ret
+    ret = await @schema.$database.query @to_sql()...
+    @["_#{@_query_type}"].convert_result ret
+  
+  iterate: (iter, done) ->
+    [conn, query_stream] = @schema.$database.stream @to_sql()...
+    query_stream.on "result", (row) =>
+      conn.pause()
+      object = @["_#{@_query_type}"].convert_result row
+      iter object, (err) ->
+        query_stream.emit "error", err if err?
+        conn.resume()
 
-  _query: () ->
-    @schema.$database.query @to_sql()...
-    .then (rows) -> callback null, rows
-    .catch (err) -> callback err
+    query_stream.once "end", done
+    query_stream.once "error", (err) ->
+      query_stream.removeAllListeners "result"
+      query_stream.removeAllListeners "end"
+      done err
 
   limit: (limit, offset) ->
     @_limit = if limit? then new Limit limit, offset

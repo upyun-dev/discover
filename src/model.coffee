@@ -108,8 +108,8 @@ class Model extends EventEmitter
     else if attr? then @_previous_attributes[attr]
     else lo.assign {}, @_previous_attributes
 
-  insert: () -> @$schema.insert @
-  update: () -> @$schema.update @
-  delete: () -> @$schema.delete @
+  insert: -> @$schema.insert @
+  update: -> @$schema.update @
+  delete: -> @$schema.delete @
 
 module.exports = Model

@@ -1,4 +1,5 @@
 mysql = require "mysql"
+util = require "util"
 
 class DataBase
   pools: {}
@@ -11,34 +12,39 @@ class DataBase
   constructor: (@cfg = {}) ->
     @cfg = Object.assign @default_cfg, @cfg
     @pools[@cfg.database] ?= mysql.createPool @cfg
+    @promisify @pools[@cfg.database]
+
+  promisify: (pool) ->
+    pool["async_#{name}"] ?= util.promisify name for name in ["getConnection"]
 
   create: ->
     conn = mysql.createConnection @cfg
-    conn.connect()
-    Promise.resolve conn
+    await conn.connect()
 
   destroy: (conn) ->
-    conn.end()
-    Promise.resolve null
+    await conn.end()
 
   # pub APIs
   query: (sql, values = []) ->
     pool = @pools[@cfg.database]
+    conn = await pool.async_getConnection()
+    conn.async_query ?= util.promisify conn.query
+    result = await conn.async_query sql, values
+    conn.release()
+    result
 
-    new Promise (resolve, reject) =>
-      pool.getConnection (err, conn) =>
-        err and reject err
-        conn.query sql, values, (err, args...) ->
-          conn.release()
-          err and reject err
-          resolve args...
+  stream: (sql, values = []) ->
+    pool = @pools[@cfg.database]
+    conn = await pool.async_getConnection()
+    query_stream = conn.query sql, values
+    [conn, query_stream]
 
   next_sequence: (name) ->
     sql = """
       INSERT INTO `sequence` (`#{name}`) VALUES(?) ON DUPLICATE KEY UPDATE `id` = LAST_INSERT_ID(`id` + 1)
     """
 
-    @query sql, [name]
-    .then ({ insertId }) -> insertId
+    { insertId } = await @query sql, [name]
+    insertId
 
 module.exports = DataBase
