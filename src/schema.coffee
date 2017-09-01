@@ -1,5 +1,4 @@
 lo = require "lodash"
-async = require "async"
 Query = require "./query"
 { createHash } = require "crypto"
 

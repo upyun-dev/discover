@@ -14,7 +14,6 @@
     "test-cov": "NODE_ENV=test node_modules/.bin/istanbul report text-summary lcov"
   },
   "dependencies": {
-    "async": "^2.4.0",
     "coffee-script": "^1.12.5",
     "eventemitter2": "^4.1.0",
     "lodash": "^4.17.4",
