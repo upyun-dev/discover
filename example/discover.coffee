@@ -14,7 +14,7 @@ discover = new Discover dbcfg, cachecfg
 
 # 创建一个 User Schema
 User = discover.define_schema 
-  table_name: "user"
+  name: "user"
 
   fields: [
     { column: "id", type: "int", pk: yes, auto: yes }

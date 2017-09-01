@@ -5,7 +5,7 @@ Mixed = require "../src/mixed"
 Schema = Mixed { database, cache }
 
 User = Schema
-  table_name: "user"
+  name: "user"
 
   fields: [
     { column: "id", type: "int", pk: yes, auto: yes }

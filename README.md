@@ -23,7 +23,7 @@ Discover 是一个 Node.js 平台上的 Mysql ORM.
 + 创建模型 schema 的方法变为 `define_schema`
 + name 作为 column 的符号链接
 + 驼峰命名 -> 蛇形命名
-+ schema_pattern 中的 `tableName` 属性名变为 `table_name`
++ schema_pattern 中的 `tableName` 属性名变为 `name`
 + `find_*` 方法中的可选参数 `options` 中的 `order_by` 值从 `column` 变为 `{ column, order }`.
 +  `Schema.update` 和 `Schema.delete` 返回的 Promise 的 resolve 函数参数为 **一个** 二元数组, 包含旧模型的 attributes, 以及新的模型, 而不是之前包含 **两个** 参数.
 + 引用内部类的方法也有所差异, 参看 **类与模块** 一章的第一节.
@@ -81,7 +81,7 @@ schema_pattern 用于配置一个 Schema
 
 ```coffee
 {
-  table_name: "mysql 表名字" # String
+  name: "mysql 表名字" # String
 
   fields: [ # Array
     {
@@ -246,7 +246,7 @@ discover = new Discover dbcfg, cachecfg
 
 # 创建一个 User Schema
 User = discover.define_schema 
-  table_name: "user"
+  name: "user"
 
   fields: [
     { column: "id", type: "int", pk: yes, auto: yes }
@@ -403,31 +403,35 @@ Discover 允许在 Schema 上定义它数据模型的钩子函数, 他们将在�
 
 #### Before Hook
 ```coffee
-Schema.before 'insert', (done) ->
+Schema.before 'insert', ->
+  # 回调是一个 AsyncFunction
   # `this` => 引用了当前操作的模型
-  # 当这个 hook 结束时需要调用 done
-  done(err)
+  # 异常/错误直接抛出
+  await async_operations()
 ```
 
 #### After Hooks
 ```coffee
 # insert
-Schema.after 'insert', (model, done) ->
+Schema.after 'insert', ->
+  # 回调是一个 AsyncFunction
   # `this` => 引用了当前操作的模型
-  # 当这个 hook 结束时需要调用 done
-  done(err)
+  # 异常/错误直接抛出
+  await async_operations()
 
 # update
-Schema.after 'update', (oldstates, new_model, done) ->
+Schema.after 'update', (oldstates) ->
+  # 回调是一个 AsyncFunction
   # `this` => 引用了当前操作的模型
-  # 当这个 hook 结束时需要调用 done
-  done(err)
+  # 异常/错误直接抛出
+  await
 
 # delete
-Schema.after 'delete', (oldstates, done) ->
+Schema.after 'delete', ->
+  # 回调是一个 AsyncFunction
   # `this` => 引用了当前操作的模型
-  # 当这个 hook 结束时需要调用 done
-  done(err)
+  # 异常/错误直接抛出
+  await async_operations()
 ```
 
 _注1: 只允许对 `insert`, `update`, `delete` 三个方法设置 hooks_
@@ -443,11 +447,11 @@ Discover 支持数据域的修改校验, 你可以通过在 `schema_pattern` 中
 定义一个校验方法:
 
 ```coffee
-user.validateFields = (callback) ->
-  if valid
-    callback null
-  else
-    callback new Error 'balabala'
+user.validateFields = ->
+  # validation 函数是一个 AsyncFunction
+  # this -> model
+  # 不通过 validate 的直接抛出异常/错误即可
+  throw err if err = await async_validation()
 };
 ```
 

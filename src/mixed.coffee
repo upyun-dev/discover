@@ -3,9 +3,9 @@ Table = require "./table"
 Model = require "./model"
 Schema = require "./schema"
 
-wash = (pattern) -> delete pattern[attr] for attr in ["fields", "indices", "table_name"]
+wash = (pattern) -> delete pattern[attr] for attr in ["fields", "indices", "name"]
 create = (database, cache, pattern) ->
-  { fields = [], indices = [], table_name } = pattern_copied = lo.cloneDeep pattern
+  { fields = [], indices = [], name } = pattern_copied = lo.cloneDeep pattern
 
   indices.push field for field in fields when field.index? or field.unique?
   wash pattern_copied
@@ -16,7 +16,7 @@ create = (database, cache, pattern) ->
     @$cache: cache
     @$database: database
 
-    @$table: new Table { name: table_name, fields }
+    @$table: new Table { name, fields }
 
     @_before_hooks: {}
     @_after_hooks: {}

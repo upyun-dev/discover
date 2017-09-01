@@ -71,9 +71,37 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   getargs: (args...) -> lo(args).compact().flattenDeep().value()
 
+  rewrite_error: (err) ->
+    if err?
+      err.message = "From table [#{@schema.$table.name}]: #{err.message}"
+    err
+
+  enqueue: (queue, node) ->
+    unless lo.isArray node or node.op? or node.value?
+      queue.push { child_name, node } for child_name of node
+    queue
+
+  cut: (child_name, node) ->
+    if child_name.startWith "$" or @schema.$table.fields[child_name]
+      no
+    else
+      delete node[child_name]
+      yes
+
+  # 减掉不属于 Model 的字段
+  prune: (query_condition) ->
+    queue = @enqueue [], query_condition
+    # 广搜剪枝
+    until lo.isEmpty queue
+      { child_name, node } = queue.shift()
+      @enqueue queue, node[child_name] unless @cut child_name, node
+
   execute: ->
-    ret = await @schema.$database.query @to_sql()...
-    @["_#{@_query_type}"].convert_result ret
+    try
+      ret = await @schema.$database.query @to_sql()...
+      @["_#{@_query_type}"].convert_result ret
+    catch err
+      throw @rewrite_error err
   
   iterate: (iter, done) ->
     [conn, query_stream] = @schema.$database.stream @to_sql()...
@@ -85,10 +113,10 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
         conn.resume()
 
     query_stream.once "end", done
-    query_stream.once "error", (err) ->
+    query_stream.once "error", (err) =>
       query_stream.removeAllListeners "result"
       query_stream.removeAllListeners "end"
-      done err
+      done @rewrite_error err
 
   limit: (limit, offset) ->
     @_limit = if limit? then new Limit limit, offset
@@ -108,7 +136,8 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     @_query_type = "select"
     @
 
-  where: (condition) ->
+  where: (condition, options = { disable_check: no }) ->
+    @prune condition if condition? and not options.disable_check
     @_where = new Where @schema, condition
     @
 
