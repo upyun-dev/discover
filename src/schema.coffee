@@ -17,13 +17,6 @@ class Schema
           .where condition, options
           .execute()
 
-  @_create_query: (condition, options = {}) ->
-    @_prune condition if condition?
-
-    new Query @
-    .select()
-    .where condition
-
   @every: (condition, iterator, done, options = {}) ->
     q = new Query @
         .select()

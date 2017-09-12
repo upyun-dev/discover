@@ -2,7 +2,7 @@
 
 Discover 是一个 Node.js 平台上的 Mysql ORM.
 
-需要 CoffeeScript v0.12.x 编译源码, 依赖 Node.js ≥ v6.x 版本.
+需要 CoffeeScript ≥ v0.12.x 编译源码, 且部分语法依赖 Node.js ≥ v8.x 版本.
 
 # Dependencies Services
 
@@ -383,6 +383,7 @@ User.persist()
   order_by: { column: String, order: "asc" | "desc" } # 依据哪个列按什么顺序排序, 可选
   limit: Number # 返回数量限制, 可选
   page: Number # 第几页, 可选
+  disable_check: Boolean # 是否取消查询语法树剪枝, default: false, 默认会检查传入的查询语句并将不属于这个 Schema 的字段去掉
 }
 ```
 
