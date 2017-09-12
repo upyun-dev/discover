@@ -77,9 +77,12 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     err
 
   enqueue: (queue, node) ->
-    unless lo.isArray node or node.op? or node.value?
+    unless @is_leaf node
       queue.push { child_name, node } for child_name of node
     queue
+  
+  is_leaf: (node) ->
+    not lo.isObject node or lo.isArray node or node?.op? or node?.value?
 
   cut: (child_name, node) ->
     if child_name.startWith "$" or @schema.$table.fields[child_name]
