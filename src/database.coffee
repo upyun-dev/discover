@@ -15,7 +15,7 @@ class DataBase
     @promisify @pools[@cfg.database]
 
   promisify: (pool) ->
-    pool["async_#{name}"] ?= util.promisify name for name in ["getConnection"]
+    pool["async_#{name}"] ?= util.promisify pool[name] for name in ["getConnection"]
 
   create: ->
     conn = mysql.createConnection @cfg

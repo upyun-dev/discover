@@ -11,9 +11,6 @@ class Operator.Null
   to_sql: -> "`#{@column}` IS #{@$name}"
   getargs: -> []
 
-class Operator.NotNull extends Operator.Null
-  $name: "NOT NULL"
-
 class Operator.And
   $name: "AND"
   constructor: (args...) -> @filters = for f in lo.flattenDeep args when f? then f
@@ -46,5 +43,4 @@ module.exports =
   gte: (column, value) -> new Operator column, ">=", value
   lt: (column, value) -> new Operator column, "<", value
   lte: (column, value) -> new Operator column, "<=", value
-  isNull: (column) -> new Operator.Null column
-  isNotNull: (column) -> new Operator.NotNull column
+  null: (column) -> new Operator.Null column

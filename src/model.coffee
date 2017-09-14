@@ -1,4 +1,4 @@
-{ EventEmitter2: EventEmitter } = require "eventemitter2"
+Schema = require "./schema"
 lo = require "lodash"
 
 resolve_args = ([column = {}, value = {}, options = {}] = []) ->
@@ -16,7 +16,7 @@ resolve_args = ([column = {}, value = {}, options = {}] = []) ->
     else 
       [{}, {}]
 
-class Model extends EventEmitter
+class Model extends Schema
   constructor: (attributes = {}) ->
     super()
     @$schema = @constructor

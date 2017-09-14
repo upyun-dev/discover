@@ -1,7 +1,7 @@
 lo = require "lodash"
 Table = require "./table"
 Model = require "./model"
-Schema = require "./schema"
+# Schema = require "./schema"
 
 wash = (pattern) -> delete pattern[attr] for attr in ["fields", "indices", "name"]
 create = (database, cache, pattern) ->
@@ -21,8 +21,9 @@ create = (database, cache, pattern) ->
     @_before_hooks: {}
     @_after_hooks: {}
 
-    # mixin Schema 的静态方法
-    lo.assign @, Schema
+    # # mixin Schema 的静态方法
+    # lo.assign @, Schema
+    # console.log @
 
     # mixin pattern 参数中定义的实例方法
     lo.assign @::, pattern_copied

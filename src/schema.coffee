@@ -1,15 +1,18 @@
 lo = require "lodash"
 Query = require "./query"
 { createHash } = require "crypto"
+{ EventEmitter2: EventEmitter } = require "eventemitter2"
 
-class Schema
+class Schema extends EventEmitter
   @persist: ->
     new Query @
     .create()
     .execute()
 
   @all: (options = {}) ->
-    await @find {}, options
+    await new Query @
+          .select()
+          .execute()
 
   @count: (condition, options = {}) ->
     await new Query @
@@ -145,7 +148,7 @@ class Schema
             .insert()
             .values @
             .execute()
-    @set @$schema.$table.auto, id, silent: yes if @$schema.$table.auto?
+    @set(@$schema.$table.auto, id, silent: yes) if @$schema.$table.auto?
     await @$schema.clean_cache @
 
   @update: (model) ->

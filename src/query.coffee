@@ -1,4 +1,4 @@
-ooq = require "ooq"
+QParser = require "ooq"
 lo = require "lodash"
 operators_ffi = require "./operator"
 
@@ -34,7 +34,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     [
       "
         #{@_select.to_sql()}
-        #{@_where?.to_sql()}
+        #{@_where?.to_sql() ? ''}
         #{@_order_by?.to_sql() ? ''}
         #{@_limit?.to_sql() ? ''}
       ".trim()
@@ -82,10 +82,10 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     queue
   
   is_leaf: (node) ->
-    not lo.isObject node or lo.isArray node or node?.op? or node?.value?
+    not lo.isObject node #or lo.isArray node or node?.op? or node?.value?
 
   cut: (child_name, node) ->
-    if child_name.startWith "$" or @schema.$table.fields[child_name]
+    if child_name.startsWith "$" or @schema.$table.fields[child_name]
       no
     else
       delete node[child_name]
@@ -141,7 +141,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   where: (condition, options = { disable_check: no }) ->
     @prune condition if condition? and not options.disable_check
-    @_where = new Where @schema, condition
+    @_where = new Where @schema, condition if condition?
     @
 
   update: ->
@@ -202,11 +202,10 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
 class Where
   constructor: (@schema, @condition) ->
-    ooq.setup_ffi operators_ffi
-
     { fields } = @schema.$table
-    { tree } = new ooq.Parser @condition
-    @node = (new ooq.SemanticAnalysis tree).query_code
+
+    root = new QParser @condition, operators_ffi
+    @node = root.gen_code()
 
   getargs: -> @node.getargs?() ? []
 
@@ -307,7 +306,7 @@ class OrderBy
       ]
 
   to_sql: ->
-    "ORDER BY #{flatten().join ', '}"
+    "ORDER BY #{@flatten().join ', '}"
 
   flatten: ->
     "#{column} #{order.toUpperCase()}" for { column, order } in @columns

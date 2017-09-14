@@ -23,7 +23,7 @@ User = Schema
   foo: -> null
   bar: -> null
 
-user = new User name: "kafka", age: 10, comments: ["good", "bad", "foo", "bar"], remark: 0.98, last_login: new Date()
+user = new User name: "kafka", age: 10, remark: 0.98, last_login: new Date()
 
 # console.log user.to_json(yes), user.to_json()
 # console.log user.has "age"
@@ -37,14 +37,16 @@ user = new User name: "kafka", age: 10, comments: ["good", "bad", "foo", "bar"],
 # console.log user._previous_attributes
 # console.log user.previous "name"
 do ->
-  models = await User.all()
-  console.log models
-  count = await User.count()
-  modles = await User.find age: { op: "gte", value: 5 }, { limit: 3, order_by: { column: "id", order: "desc" }, page: 2 }
-  console.log models
-  model = await User.find_one age: { op: "gte", value: 5 }
-  console.log model
-
+  try
+    # models = await User.all()
+    # console.log models
+    # count = await User.count()
+    modles = await User.find age: { $gte: 5 }, { disable_check: on, limit: 3, order_by: { column: "id", order: "desc" }, page: 2 }
+    # console.log models
+    # model = await User.find_one age: { op: "gte", value: 5 }
+    # console.log model
+  catch err
+    console.error err
 #User.all()
 #.then (models) ->
 #  # console.log models.length
