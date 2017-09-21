@@ -41,7 +41,7 @@ do ->
     # models = await User.all()
     # console.log models
     # count = await User.count()
-    modles = await User.find age: { $gte: 5 }, { disable_check: on, limit: 3, order_by: { column: "id", order: "desc" }, page: 2 }
+    modles = await User.find {age: {$and: { $lt: 5, $neq: 2}}} , { disable_check: off, limit: 3, order_by: { column: "id", order: "desc" }, page: 2 }
     # console.log models
     # model = await User.find_one age: { op: "gte", value: 5 }
     # console.log model

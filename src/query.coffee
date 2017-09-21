@@ -85,7 +85,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
     not lo.isObject node #or lo.isArray node or node?.op? or node?.value?
 
   cut: (child_name, node) ->
-    if child_name.startsWith "$" or @schema.$table.fields[child_name]
+    if child_name.startsWith("$") or @schema.$table.fields[child_name]?
       no
     else
       delete node[child_name]
@@ -101,6 +101,7 @@ class Query # Model 的 query 操作, 用于构建下层 SQL 查询语句
 
   execute: ->
     try
+      console.log @to_sql()
       ret = await @schema.$database.query @to_sql()...
       @["_#{@_query_type}"].convert_result ret
     catch err
